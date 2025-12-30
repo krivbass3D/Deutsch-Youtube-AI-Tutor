@@ -30,3 +30,20 @@ export interface ChatMessage {
   content: string;
   timestamp: number;
 }
+
+export interface LessonStatistics {
+  correct: number;
+  incorrect: number;
+  skipped: number;
+  answers: Record<string, { userAnswer: string; correct: boolean }>; // key: exerciseIdx-taskIdx
+}
+
+export interface LessonProgress {
+  vocabSkipped: boolean;
+  vocabCompleted: boolean;
+  currentExerciseIdx: number;
+  currentTaskIdx: number;
+  statistics: LessonStatistics;
+  completed: boolean;
+  lastActivityAt: string;
+}
