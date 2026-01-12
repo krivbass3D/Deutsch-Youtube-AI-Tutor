@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Vocabulary } from '../types';
 import { validateAnswer } from '../services/validationService';
-import { sortByDifficulty } from '../services/difficultyTracker';
+import { sortBySpacedRepetition } from '../services/spacedRepetition';
 import { recordExamAnswer } from '../services/vocabularyStatistics';
 
 interface ExamModeProps {
@@ -27,7 +27,7 @@ const ExamMode: React.FC<ExamModeProps> = ({ vocabulary, lessonId, onFinish }) =
   const [answered, setAnswered] = useState(false);
   const [feedback, setFeedback] = useState<{ message: string; isCorrect: boolean } | null>(null);
 
-  const sortedVocab = sortByDifficulty(vocabulary, lessonId);
+  const sortedVocab = sortBySpacedRepetition(vocabulary, lessonId);
   const current = sortedVocab[currentIndex];
 
   const handleSubmitAnswer = () => {

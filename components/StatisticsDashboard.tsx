@@ -1,11 +1,14 @@
 import React, { useEffect, useState } from 'react';
+import { Vocabulary } from '../types';
 import { getLessonStatistics, getProblematicWords, getNeedHelpWords, formatTime, WordStatistics } from '../services/vocabularyStatistics';
+import SpacedRepetitionStats from './SpacedRepetitionStats';
 
 interface StatisticsDashboardProps {
   lessonId: string;
+  vocabulary?: Vocabulary[];
 }
 
-const StatisticsDashboard: React.FC<StatisticsDashboardProps> = ({ lessonId }) => {
+const StatisticsDashboard: React.FC<StatisticsDashboardProps> = ({ lessonId, vocabulary = [] }) => {
   const [totalStats, setTotalStats] = useState(getLessonStatistics(lessonId));
   const [problematic, setProblematic] = useState<WordStatistics[]>([]);
   const [needHelp, setNeedHelp] = useState<WordStatistics[]>([]);
@@ -27,7 +30,10 @@ const StatisticsDashboard: React.FC<StatisticsDashboardProps> = ({ lessonId }) =
 
   return (
     <div className="space-y-6">
-      {/* Основная статистика */}
+      {/* Статистика Spaced Repetition */}
+      {vocabulary.length > 0 && (
+        <SpacedRepetitionStats vocabulary={vocabulary} lessonId={lessonId} />
+      )}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
         <div className="bg-blue-50 rounded-xl p-4 border border-blue-200">
           <p className="text-2xl font-bold text-blue-700">{totalStats.totalWordsStudied}</p>

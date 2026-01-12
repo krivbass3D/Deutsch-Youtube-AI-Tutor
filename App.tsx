@@ -7,7 +7,7 @@ import TutorChat from './components/TutorChat';
 import TokenIndicator from './components/TokenIndicator';
 import ExamMode from './components/ExamMode';
 import StatisticsDashboard from './components/StatisticsDashboard';
-import { sortByDifficulty } from './services/difficultyTracker';
+import { sortBySpacedRepetition } from './services/spacedRepetition';
 
 type ViewMode = 'dashboard' | 'lesson-overview' | 'vocabulary' | 'practice' | 'exam' | 'add-lesson' | 'summary';
 
@@ -543,7 +543,7 @@ const App: React.FC = () => {
             </div>
 
             {showStatistics ? (
-              <StatisticsDashboard lessonId={selectedLesson.lesson_id} />
+              <StatisticsDashboard lessonId={selectedLesson.lesson_id} vocabulary={selectedLesson.vocabulary} />
             ) : (
               <div className="space-y-8">
                 <div className="relative pl-6 border-l-2 border-blue-100">
@@ -604,7 +604,7 @@ const App: React.FC = () => {
         )}
 
         {currentView === 'vocabulary' && selectedLesson && (
-          <VocabularyCard vocabulary={sortByDifficulty(selectedLesson.vocabulary || [], selectedLesson.lesson_id)} onFinish={handleVocabFinish} lessonId={selectedLesson.lesson_id} />
+          <VocabularyCard vocabulary={sortBySpacedRepetition(selectedLesson.vocabulary || [], selectedLesson.lesson_id)} onFinish={handleVocabFinish} lessonId={selectedLesson.lesson_id} />
         )}
 
         {currentView === 'exam' && selectedLesson && (
