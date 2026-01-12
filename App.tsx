@@ -35,6 +35,7 @@ const App: React.FC = () => {
   const [selectedLesson, setSelectedLesson] = useState<Lesson | null>(null);
   const [progress, setProgress] = useState<LessonProgress | null>(null);
   const [jsonInput, setJsonInput] = useState('');
+  const [expandedVocabulary, setExpandedVocabulary] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   // Enhanced save with visual feedback
@@ -54,6 +55,7 @@ const App: React.FC = () => {
 
   const selectLesson = (lesson: Lesson) => {
     setSelectedLesson(lesson);
+    setExpandedVocabulary(false);
     const saved = localStorage.getItem(`lesson_${lesson.lesson_id}_progress`);
     if (saved) {
       try {
@@ -606,12 +608,29 @@ const App: React.FC = () => {
               <div className="bg-blue-50/50 p-4 rounded-2xl border border-blue-100">
                 <h4 className="text-xs font-bold text-blue-800 mb-2 uppercase">Слова из урока:</h4>
                 <div className="flex flex-wrap gap-2">
-                  {(selectedLesson.vocabulary || []).slice(0, 15).map((v, i) => (
-                    <span key={i} className="text-[10px] px-2 py-1 bg-white border border-blue-100 rounded-lg text-blue-600 font-medium">
-                      {v.word}
-                    </span>
-                  ))}
-                  {selectedLesson.vocabulary.length > 15 && <span className="text-[10px] text-blue-400 px-1">...</span>}
+                  {(selectedLesson.vocabulary || [])
+                    .slice(0, expandedVocabulary ? undefined : 15)
+                    .map((v, i) => (
+                      <span key={i} className="text-[10px] px-2 py-1 bg-white border border-blue-100 rounded-lg text-blue-600 font-medium">
+                        {v.word}
+                      </span>
+                    ))}
+                  {selectedLesson.vocabulary.length > 15 && !expandedVocabulary && (
+                    <button
+                      onClick={() => setExpandedVocabulary(true)}
+                      className="text-[10px] text-blue-400 px-2 py-1 hover:text-blue-600 hover:bg-blue-50 rounded-lg border border-blue-200 transition-colors cursor-pointer font-medium"
+                    >
+                      ... ({selectedLesson.vocabulary.length - 15} ещё)
+                    </button>
+                  )}
+                  {expandedVocabulary && selectedLesson.vocabulary.length > 15 && (
+                    <button
+                      onClick={() => setExpandedVocabulary(false)}
+                      className="text-[10px] text-blue-400 px-2 py-1 hover:text-blue-600 hover:bg-blue-50 rounded-lg border border-blue-200 transition-colors cursor-pointer font-medium"
+                    >
+                      ↑ Свернуть
+                    </button>
+                  )}
                 </div>
               </div>
             </div>

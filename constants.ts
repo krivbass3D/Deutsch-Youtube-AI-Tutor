@@ -1,4 +1,7 @@
 import { Lesson } from './types';
+import lessonsData from './lessons.json';
+
+export const INITIAL_LESSONS: Lesson[] = lessonsData;
 
 export const SYSTEM_PROMPT = `
 # СИСТЕМНЫЙ ПРОМПТ: ИИ-РЕПЕТИТОР НЕМЕЦКОГО ЯЗЫКА
@@ -144,52 +147,3 @@ export const SYSTEM_PROMPT = `
 
 **Помните: КРАТКОСТЬ при правильных ответах - это ключевое правило!** ⚡
 `;
-
-export const INITIAL_LESSONS: Lesson[] = [
-  {
-    lesson_id: "1",
-    title: "Знакомство (Kennenlernen)",
-    vocabulary: [
-      { word: "heißen", translation: "называться", type: "verb" },
-      { word: "wohnen", translation: "жить", type: "verb" },
-      { word: "der Name", translation: "имя", type: "noun" },
-      { word: "aus", translation: "из", type: "phrase" },
-      { word: "schön", translation: "прекрасно/красиво", type: "adjective" }
-    ],
-    exercises: [
-      {
-        title: "Упражнение 1. Простые предложения",
-        tasks: ["Меня зовут Макс.", "Я живу в Берлине.", "Это мое имя.", "Я из Германии."]
-      }
-    ],
-    answers: [
-      {
-        exercise: 1,
-        solutions: ["Ich heiße Max.", "Ich wohne in Berlin.", "Das ist mein Name.", "Ich komme aus Deutschland."]
-      }
-    ]
-  },
-  {
-    lesson_id: "2",
-    title: "Модальные глаголы (Modalverben)",
-    vocabulary: [
-      { word: "können", translation: "мочь/уметь", type: "verb" },
-      { word: "müssen", translation: "быть должным", type: "verb" },
-      { word: "wollen", translation: "хотеть", type: "verb" },
-      { word: "sprechen", translation: "говорить", type: "verb" },
-      { word: "Deutsch", translation: "немецкий", type: "noun" }
-    ],
-    exercises: [
-      {
-        title: "Упражнение 1. Возможности и желания",
-        tasks: ["Я могу говорить по-немецки.", "Он хочет учиться."]
-      }
-    ],
-    answers: [
-      {
-        exercise: 1,
-        solutions: ["Ich kann Deutsch sprechen.", "Er will lernen."]
-      }
-    ]
-  }
-];

@@ -1,0 +1,457 @@
+[
+  {
+    "lesson_id": "1",
+    "title": "Знакомство (Kennenlernen)",
+    "vocabulary": [
+      {
+        "word": "heißen",
+        "translation": "называться",
+        "type": "verb"
+      },
+      {
+        "word": "wohnen",
+        "translation": "жить",
+        "type": "verb"
+      },
+      {
+        "word": "der Name",
+        "translation": "имя",
+        "type": "noun"
+      },
+      {
+        "word": "aus",
+        "translation": "из",
+        "type": "phrase"
+      },
+      {
+        "word": "schön",
+        "translation": "прекрасно/красиво",
+        "type": "adjective"
+      }
+    ],
+    "exercises": [
+      {
+        "title": "Упражнение 1. Простые предложения",
+        "tasks": [
+          "Меня зовут Макс.",
+          "Я живу в Берлине.",
+          "Это мое имя.",
+          "Я из Германии."
+        ]
+      }
+    ],
+    "answers": [
+      {
+        "exercise": 1,
+        "solutions": [
+          "Ich heiße Max.",
+          "Ich wohne in Berlin.",
+          "Das ist mein Name.",
+          "Ich komme aus Deutschland."
+        ]
+      }
+    ]
+  },
+  {
+    "lesson_id": "2",
+    "title": "Модальные глаголы (Modalverben)",
+    "vocabulary": [
+      {
+        "word": "können",
+        "translation": "мочь/уметь",
+        "type": "verb"
+      },
+      {
+        "word": "müssen",
+        "translation": "быть должным",
+        "type": "verb"
+      },
+      {
+        "word": "wollen",
+        "translation": "хотеть",
+        "type": "verb"
+      },
+      {
+        "word": "sprechen",
+        "translation": "говорить",
+        "type": "verb"
+      },
+      {
+        "word": "Deutsch",
+        "translation": "немецкий",
+        "type": "noun"
+      }
+    ],
+    "exercises": [
+      {
+        "title": "Упражнение 1. Возможности и желания",
+        "tasks": [
+          "Я могу говорить по-немецки.",
+          "Он хочет учиться."
+        ]
+      }
+    ],
+    "answers": [
+      {
+        "exercise": 1,
+        "solutions": [
+          "Ich kann Deutsch sprechen.",
+          "Er will lernen."
+        ]
+      }
+    ]
+  },
+    {
+    "lesson_id": "11",
+    "title": "11. Повествовательное предложение.",
+    "vocabulary": [
+      { "word": "das Klavier", "translation": "пианино, фортепиано", "type": "noun" },
+      { "word": "die Geige", "translation": "скрипка", "type": "noun" },
+      { "word": "das Instrument", "translation": "инструмент", "type": "noun" },
+      { "word": "die Wohnung", "translation": "квартира", "type": "noun" },
+      { "word": "das Eis", "translation": "мороженое", "type": "noun" },
+      { "word": "der Kuchen", "translation": "пирог", "type": "noun" },
+      { "word": "das Getränk", "translation": "напиток", "type": "noun" },
+      { "word": "das Mineralwasser", "translation": "минеральная вода", "type": "noun" },
+      { "word": "der Saft", "translation": "сок", "type": "noun" },
+      { "word": "die Schokolade", "translation": "шоколад", "type": "noun" },
+      { "word": "das Spielzeug", "translation": "игрушка", "type": "noun" },
+      { "word": "das Geschenk", "translation": "подарок", "type": "noun" },
+
+      { "word": "spielen", "translation": "играть", "type": "verb" },
+      { "word": "suchen", "translation": "искать", "type": "verb" },
+      { "word": "verstecken", "translation": "прятать", "type": "verb" },
+
+      { "word": "ordentlich", "translation": "прилежный, аккуратный", "type": "adjective" },
+      { "word": "fleißig", "translation": "прилежный, трудолюбивый", "type": "adjective" }
+    ],
+    "exercises": [
+      {
+        "title": "Упражнение 1. Переведите и доведите до автоматизма",
+        "tasks": [
+          "После урока мы идём в парк.",
+          "Мария должна пойти к директору.",
+          "Я пишу книгу.",
+          "Он умеет играть на пианино.",
+          "Анна ищет квартиру.",
+          "Мама ест пирог.",
+          "Я не приду сегодня.",
+          "Мы идём в кино.",
+          "Она не читает книги.",
+          "Родители не поедут в Германию.",
+          "Я хочу купить мороженое.",
+          "Она живёт в Берлине.",
+          "Скрипка – прекрасный инструмент.",
+          "Ты покупаешь платье для мамы.",
+          "Я читаю много книг.",
+          "Маркус должен купить машину.",
+          "Погода сегодня плохая.",
+          "Родители заказывают цветы для бабушки.",
+          "Миша учит немецкий, а Костя учит испанский.",
+          "Я не хочу пить минеральную воду.",
+          "Она даёт напиток.",
+          "Я хотел бы сок.",
+          "Анна берёт шоколад.",
+          "Папа моет кошку.",
+          "Родители прячут подарки.",
+          "Мы идём играть в теннис.",
+          "Студенты сегодня прилежные.",
+          "Я каждый день играю на пианино.",
+          "Мама не умеет плавать.",
+          "Он покупает квартиру."
+        ]
+      }
+    ],
+    "answers": [
+      {
+        "exercise": 1,
+        "solutions": [
+          "Nach dem Unterricht gehen wir in den Park.",
+          "Maria muss zum Direktor gehen.",
+          "Ich schreibe ein Buch.",
+          "Er kann Klavier spielen.",
+          "Anna sucht eine Wohnung.",
+          "Mama isst Kuchen.",
+          "Ich komme heute nicht.",
+          "Wir gehen ins Kino.",
+          "Sie liest keine Bücher.",
+          "Die Eltern fahren nicht nach Deutschland.",
+          "Ich möchte ein Eis kaufen.",
+          "Sie wohnt in Berlin.",
+          "Die Geige ist ein schönes Instrument.",
+          "Du kaufst ein Kleid für Mama.",
+          "Ich lese viele Bücher.",
+          "Markus muss ein Auto kaufen.",
+          "Das Wetter ist heute schlecht.",
+          "Die Eltern bestellen Blumen für die Oma.",
+          "Mischa lernt Deutsch und Kostja lernt Spanisch.",
+          "Ich möchte kein Mineralwasser trinken.",
+          "Sie gibt ein Getränk.",
+          "Ich hätte gern einen Saft.",
+          "Anna nimmt Schokolade.",
+          "Papa wäscht die Katze.",
+          "Die Eltern verstecken Geschenke.",
+          "Wir gehen Tennis spielen.",
+          "Die Studenten sind heute fleißig.",
+          "Ich spiele jeden Tag Klavier.",
+          "Mama kann nicht schwimmen.",
+          "Er kauft eine Wohnung."
+        ]
+      }
+    ]
+  },
+  {
+    "lesson_id": "12",
+    "title": "12. Вопросительные предложения",
+    "vocabulary": [
+      { "word": "finden", "translation": "находить; считать", "type": "verb" },
+      { "word": "heißen", "translation": "называться", "type": "verb" },
+      { "word": "sprechen", "translation": "говорить", "type": "verb" },
+      { "word": "essen", "translation": "есть", "type": "verb" },
+      { "word": "bestellen", "translation": "заказывать", "type": "verb" },
+      { "word": "lesen", "translation": "читать", "type": "verb" },
+      { "word": "machen", "translation": "делать", "type": "verb" },
+      { "word": "bleiben", "translation": "оставаться", "type": "verb" },
+      { "word": "meinen", "translation": "думать, полагать", "type": "verb" },
+      { "word": "suchen", "translation": "искать", "type": "verb" },
+      { "word": "gehen", "translation": "идти", "type": "verb" },
+      { "word": "ansehen", "translation": "смотреть", "type": "verb" },
+      { "word": "hören", "translation": "слышать", "type": "verb" },
+      { "word": "arbeiten", "translation": "работать", "type": "verb" },
+      { "word": "kommen", "translation": "приходить", "type": "verb" },
+      { "word": "kennen", "translation": "знать", "type": "verb" },
+      { "word": "sagen", "translation": "говорить", "type": "verb" },
+      { "word": "wohnen", "translation": "проживать", "type": "verb" },
+      { "word": "kochen", "translation": "готовить", "type": "verb" },
+      { "word": "trinken", "translation": "пить", "type": "verb" },
+      { "word": "schreiben", "translation": "писать", "type": "verb" },
+      { "word": "kaufen", "translation": "покупать", "type": "verb" },
+      { "word": "aufstehen", "translation": "вставать", "type": "verb" },
+      { "word": "haben", "translation": "иметь", "type": "verb" },
+      { "word": "verkaufen", "translation": "продавать", "type": "verb" },
+      { "word": "bekommen", "translation": "получать", "type": "verb" },
+      { "word": "sitzen", "translation": "сидеть", "type": "verb" },
+      { "word": "nehmen", "translation": "брать", "type": "verb" },
+      { "word": "spülen", "translation": "мыть", "type": "verb" },
+      { "word": "bringen", "translation": "приносить", "type": "verb" },
+
+      { "word": "jetzt", "translation": "сейчас", "type": "adverb" },
+      { "word": "zusammen", "translation": "вместе", "type": "adverb" },
+      { "word": "hier", "translation": "здесь", "type": "adverb" },
+      { "word": "früh", "translation": "рано", "type": "adverb" },
+      { "word": "schon", "translation": "уже", "type": "adverb" },
+      { "word": "noch", "translation": "еще", "type": "adverb" },
+
+      { "word": "das Land", "translation": "страна", "type": "noun" },
+      { "word": "die Sprache", "translation": "язык", "type": "noun" },
+      { "word": "das Mädchen", "translation": "девочка", "type": "noun" },
+      { "word": "das Zimmer", "translation": "комната", "type": "noun" },
+      { "word": "das Brötchen", "translation": "бутерброд", "type": "noun" },
+      { "word": "die Anzeige", "translation": "объявление", "type": "noun" },
+      { "word": "die Milch", "translation": "молоко", "type": "noun" },
+      { "word": "der Freund", "translation": "друг", "type": "noun" },
+      { "word": "die Zeitung", "translation": "газета", "type": "noun" },
+      { "word": "die Straße", "translation": "улица", "type": "noun" },
+      { "word": "das Foto", "translation": "фото", "type": "noun" },
+      { "word": "das Gespräch", "translation": "разговор", "type": "noun" },
+      { "word": "die Frau", "translation": "женщина", "type": "noun" },
+      { "word": "die Telefonnummer", "translation": "номер телефона", "type": "noun" },
+      { "word": "die Wohnung", "translation": "квартира", "type": "noun" },
+      { "word": "die Nachricht", "translation": "сообщение", "type": "noun" },
+      { "word": "das Haus", "translation": "дом", "type": "noun" },
+      { "word": "das Dokument", "translation": "документ", "type": "noun" },
+      { "word": "die Stadt", "translation": "город", "type": "noun" },
+      { "word": "das Handy", "translation": "телефон", "type": "noun" },
+      { "word": "das Geschirr", "translation": "посуда", "type": "noun" },
+      { "word": "der Regenschirm", "translation": "зонт", "type": "noun" }
+    ],
+    "exercises": [
+      {
+        "title": "Упражнение 2. Вопросительные предложения",
+        "tasks": [
+          "Почему он здесь сидит?",
+          "Как Вас зовут?",
+          "Что ты говоришь сейчас?",
+          "Из какой ты страны?",
+          "Что ты здесь ищешь?",
+          "Как называется страна?",
+          "На каком языке ты говоришь?",
+          "Что они едят?",
+          "Кто это заказывает?",
+          "Что делает девочка?",
+          "Что вы (ihr) делаете вместе?",
+          "Где он остается?",
+          "Что она читает?",
+          "Как Вы (формально) думаете?",
+          "Что готовит женщина?",
+          "Где Вы (формально) живете?",
+          "Куда они идут вместе?",
+          "Сколько стоит машина?"
+        ]
+      },
+      {
+        "title": "Упражнение 3. Вопросы да/нет",
+        "tasks": [
+          "Она говорит на немецком?",
+          "Знаешь ли ты улицу?",
+          "Ты уже читаешь сообщение?",
+          "У вас (формально) есть еще один телефонный номер?",
+          "Они пьют молоко?",
+          "Ты ешь бутерброд?",
+          "Ищете ли вы (ihr) квартиру?",
+          "Видит ли он комнату?",
+          "Ты пишешь объявление?",
+          "Встает ли он рано?",
+          "Ты читаешь газету?",
+          "Продает ли она дом?",
+          "Считаете ли Вы город красивым?",
+          "Получаете ли вы (ihr) документ?",
+          "Сидит ли он здесь?",
+          "Берет ли она телефон?",
+          "Моем ли мы посуду?",
+          "Приносят ли они зонт?"
+        ]
+      }
+    ],
+    "answers": [
+      {
+        "exercise": 2,
+        "solutions": [
+          "Warum sitzt er hier?",
+          "Wie heißen Sie?",
+          "Was sagst du jetzt?",
+          "Aus welchem Land kommst du?",
+          "Was suchst du hier?",
+          "Wie heißt das Land?",
+          "Welche Sprache sprichst du?",
+          "Was essen sie?",
+          "Wer bestellt das?",
+          "Was macht das Mädchen?",
+          "Was macht ihr zusammen?",
+          "Wo bleibt er?",
+          "Was liest sie?",
+          "Was meinen Sie?",
+          "Was kocht die Frau?",
+          "Wo wohnen Sie?",
+          "Wohin gehen sie zusammen?",
+          "Wie viel kostet das Auto?"
+        ]
+      },
+      {
+        "exercise": 3,
+        "solutions": [
+          "Spricht sie Deutsch?",
+          "Kennst du die Straße?",
+          "Liest du schon die Nachricht?",
+          "Haben Sie noch eine Telefonnummer?",
+          "Trinken sie Milch?",
+          "Isst du ein Brötchen?",
+          "Sucht ihr eine Wohnung?",
+          "Sieht er das Zimmer?",
+          "Schreibst du eine Anzeige?",
+          "Steht er früh auf?",
+          "Liest du die Zeitung?",
+          "Verkauft sie das Haus?",
+          "Finden Sie die Stadt schön?",
+          "Bekommt ihr das Dokument?",
+          "Sitzt er hier?",
+          "Nimmt sie das Handy?",
+          "Spülen wir das Geschirr?",
+          "Bringen sie den Regenschirm?"
+        ]
+      }
+    ]
+  },
+    {
+    "lesson_id": "13",
+    "title": "13. Отрицание",
+    "vocabulary": [
+      { "word": "schauen", "translation": "смотреть", "type": "verb" },
+      { "word": "laufen", "translation": "бегать", "type": "verb" },
+      { "word": "schwimmen", "translation": "плавать", "type": "verb" },
+
+      { "word": "schlau", "translation": "хитрый", "type": "adjective" },
+      { "word": "müde", "translation": "усталый", "type": "adjective" },
+      { "word": "munter", "translation": "бодрый", "type": "adjective" },
+      { "word": "krank", "translation": "больной", "type": "adjective" },
+
+      { "word": "die Schokolade", "translation": "шоколад", "type": "noun" },
+      { "word": "die Lebensmittel", "translation": "продукты", "type": "noun" },
+      { "word": "gute Laune", "translation": "хорошее настроение", "type": "noun" },
+      { "word": "der Hunger", "translation": "голод", "type": "noun" },
+      { "word": "das Video", "translation": "видео", "type": "noun" }
+    ],
+    "exercises": [
+      {
+        "title": "Упражнение 1. Переведите и доведите до автоматизма",
+        "tasks": [
+          "Это не шоколад.",
+          "Это не мальчик.",
+          "Это не девочки.",
+          "Я не вижу кошек.",
+          "У нас нет книг.",
+          "Он не хитёр.",
+          "Она не родом из Франции.",
+          "Я не иду в кино.",
+          "Мама не покупает продукты.",
+          "Я не устал.",
+          "Катя не должна делать домашнее задание.",
+          "Маркус всегда в плохом настроении.",
+          "Папа не голоден.",
+          "У меня нет друзей.",
+          "Мама не может читать без очков.",
+          "Я не хочу есть.",
+          "Никого нет дома.",
+          "Ирина не имеет детей, а Оля имеет двоих детей.",
+          "Я не слышу радио.",
+          "Он не должен ждать.",
+          "Студенты не должны здесь курить.",
+          "Ты болен. Ты можешь не идти в школу.",
+          "Я ничего не пью.",
+          "Это не цветок.",
+          "Гарри не плавает сегодня.",
+          "Мария может не писать.",
+          "Я не смотрю это видео.",
+          "Мы не много бегаем.",
+          "У него нет подарка для неё."
+        ]
+      }
+    ],
+    "answers": [
+      {
+        "exercise": 1,
+        "solutions": [
+          "Das ist keine Schokolade.",
+          "Das ist kein Junge.",
+          "Das sind keine Mädchen.",
+          "Ich sehe keine Katzen.",
+          "Wir haben keine Bücher.",
+          "Er ist nicht schlau.",
+          "Sie kommt nicht aus Frankreich.",
+          "Ich gehe nicht ins Kino.",
+          "Mama kauft keine Lebensmittel.",
+          "Ich bin nicht müde.",
+          "Katja muss keine Hausaufgaben machen.",
+          "Markus hat nie gute Laune.",
+          "Papa hat keinen Hunger.",
+          "Ich habe keine Freunde.",
+          "Mama kann ohne Brille nicht lesen.",
+          "Ich will nicht essen.",
+          "Niemand ist zu Hause.",
+          "Irina hat keine Kinder, und Olga hat zwei Kinder.",
+          "Ich höre kein Radio.",
+          "Er muss nicht warten.",
+          "Die Studenten dürfen hier nicht rauchen.",
+          "Du bist krank. Du kannst nicht in die Schule gehen.",
+          "Ich trinke nichts.",
+          "Das ist keine Blume.",
+          "Harry schwimmt heute nicht.",
+          "Maria muss nicht schreiben.",
+          "Ich schaue dieses Video nicht an.",
+          "Wir laufen nicht viel.",
+          "Er hat kein Geschenk für sie."
+        ]
+      }
+    ]
+  }
+]
