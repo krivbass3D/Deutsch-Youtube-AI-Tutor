@@ -1,4 +1,4 @@
-
+import './index.css';
 import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { Lesson, LessonProgress, Vocabulary, Exercise, Answer } from './types';
 import { INITIAL_LESSONS } from './constants';
@@ -10,18 +10,23 @@ type ViewMode = 'dashboard' | 'lesson-overview' | 'vocabulary' | 'practice' | 'a
 const LESSONS_STORAGE_KEY = 'german_lessons_v1';
 
 const App: React.FC = () => {
-  // Persistence logic for Lessons
+  const [saveStatus, setSaveStatus] = useState<'idle' | 'saving' | 'saved' | 'error'>('idle');
+  
+  // Persistence logic for Lessons with improved error handling
   const [lessons, setLessons] = useState<Lesson[]>(() => {
+    console.log('🔄 Загрузка уроков из localStorage...');
     try {
       const saved = localStorage.getItem(LESSONS_STORAGE_KEY);
       if (saved) {
         const parsed = JSON.parse(saved);
         if (Array.isArray(parsed) && parsed.length > 0) {
+          console.log(`✅ Загружено ${parsed.length} уроков из localStorage`);
           return parsed;
         }
       }
+      console.log('ℹ️ localStorage пуст, загружаем стандартные уроки');
     } catch (e) {
-      console.error('Failed to load lessons', e);
+      console.error('❌ Ошибка загрузки уроков:', e);
     }
     return INITIAL_LESSONS;
   });
@@ -32,8 +37,19 @@ const App: React.FC = () => {
   const [jsonInput, setJsonInput] = useState('');
   const fileInputRef = useRef<HTMLInputElement>(null);
 
+  // Enhanced save with visual feedback
   useEffect(() => {
-    localStorage.setItem(LESSONS_STORAGE_KEY, JSON.stringify(lessons));
+    setSaveStatus('saving');
+    try {
+      localStorage.setItem(LESSONS_STORAGE_KEY, JSON.stringify(lessons));
+      console.log(`💾 Сохранено ${lessons.length} уроков в localStorage`);
+      setSaveStatus('saved');
+      setTimeout(() => setSaveStatus('idle'), 2000);
+    } catch (error) {
+      console.error('❌ Ошибка сохранения:', error);
+      setSaveStatus('error');
+      alert('⚠️ Не удалось сохранить данные. Возможно, переполнено хранилище браузера.');
+    }
   }, [lessons]);
 
   const selectLesson = (lesson: Lesson) => {
@@ -42,11 +58,14 @@ const App: React.FC = () => {
     if (saved) {
       try {
         const parsed = JSON.parse(saved) as LessonProgress;
+        console.log(`📖 Загружен прогресс урока #${lesson.lesson_id}`);
         setProgress(parsed);
       } catch (e) {
+        console.log(`ℹ️ Создание нового прогресса для урока #${lesson.lesson_id}`);
         initializeProgress();
       }
     } else {
+      console.log(`ℹ️ Новый прогресс для урока #${lesson.lesson_id}`);
       initializeProgress();
     }
     setCurrentView('lesson-overview');
@@ -66,7 +85,12 @@ const App: React.FC = () => {
 
   useEffect(() => {
     if (selectedLesson && progress) {
-      localStorage.setItem(`lesson_${selectedLesson.lesson_id}_progress`, JSON.stringify(progress));
+      try {
+        localStorage.setItem(`lesson_${selectedLesson.lesson_id}_progress`, JSON.stringify(progress));
+        console.log(`💾 Прогресс урока #${selectedLesson.lesson_id} сохранён`);
+      } catch (error) {
+        console.error('❌ Ошибка сохранения прогресса:', error);
+      }
     }
   }, [progress, selectedLesson]);
 
@@ -148,46 +172,74 @@ const App: React.FC = () => {
     const lesson = lessons.find(l => String(l.lesson_id) === idToDelete);
     if (!lesson) return;
 
-    if (window.confirm(`Вы уверены, что хотите удалить урок #${idToDelete}: "${lesson.title}"?`)) {
+    // Check if there's progress
+    const progressKey = `lesson_${idToDelete}_progress`;
+    const hasProgress = localStorage.getItem(progressKey) !== null;
+
+    let confirmMessage = `Вы уверены, что хотите удалить урок #${idToDelete}: "${lesson.title}"?`;
+    if (hasProgress) {
+      confirmMessage += '\n\n⚠️ У этого урока есть сохранённый прогресс, который будет потерян!';
+    }
+
+    if (window.confirm(confirmMessage)) {
+      console.log(`🗑️ Удаление урока #${idToDelete}`);
       setLessons(prev => prev.filter(l => String(l.lesson_id) !== idToDelete));
-      localStorage.removeItem(`lesson_${idToDelete}_progress`);
+      localStorage.removeItem(progressKey);
+      
       if (selectedLesson && String(selectedLesson.lesson_id) === idToDelete) {
         setSelectedLesson(null);
         setCurrentView('dashboard');
       }
+      
+      console.log(`✅ Урок #${idToDelete} удалён`);
     }
   };
 
   const clearAllData = () => {
-    if (window.confirm("Удалить ВСЕ уроки и весь прогресс обучения? Это действие необратимо.")) {
-        // Clear all keys related to lessons progress
+    const totalLessons = lessons.length;
+    if (window.confirm(`⚠️ Удалить ВСЕ ${totalLessons} уроков и весь прогресс обучения?\n\nЭто действие НЕОБРАТИМО!`)) {
+        console.log('🗑️ Очистка всех данных...');
+        
+        // Clear all lesson progress
         Object.keys(localStorage).forEach(key => {
             if (key.startsWith('lesson_')) {
                 localStorage.removeItem(key);
             }
         });
+        
+        // Clear lessons
         localStorage.removeItem(LESSONS_STORAGE_KEY);
         setLessons([]);
         setSelectedLesson(null);
         setCurrentView('dashboard');
+        
+        console.log('✅ Все данные очищены');
+        alert('✅ Все уроки и прогресс удалены');
     }
   };
 
   const restoreDefaults = () => {
-    if (window.confirm("Восстановить стандартные уроки? Ваши текущие уроки останутся.")) {
+    if (window.confirm("Восстановить стандартные уроки?\n\nВаши текущие уроки останутся, добавятся только отсутствующие.")) {
+        console.log('🔄 Восстановление стандартных уроков...');
         const merged = [...lessons];
+        let addedCount = 0;
+        
         INITIAL_LESSONS.forEach(initial => {
             if (!lessons.find(l => String(l.lesson_id) === String(initial.lesson_id))) {
                 merged.push(initial);
+                addedCount++;
             }
         });
+        
         setLessons(merged);
+        console.log(`✅ Добавлено ${addedCount} стандартных уроков`);
+        alert(`✅ Добавлено ${addedCount} стандартных уроков`);
     }
   };
 
   const handleAddLesson = () => {
     try {
-      // Robust JSON extraction: finds the first '{' and last '}'
+      // Robust JSON extraction
       let cleanInput = jsonInput.trim();
       const firstBrace = cleanInput.indexOf('{');
       const lastBrace = cleanInput.lastIndexOf('}');
@@ -202,6 +254,7 @@ const App: React.FC = () => {
       transformedLesson.lesson_id = String(raw.lesson_id || Date.now());
       transformedLesson.title = raw.title || "Новый урок";
       
+      // Transform vocabulary if needed
       if (raw.vocabulary && !Array.isArray(raw.vocabulary) && typeof raw.vocabulary === 'object') {
         const flatVocab: Vocabulary[] = [];
         const mapping: Record<string, any> = { verbs: 'verb', nouns: 'noun', adverbs: 'adverb', adjectives: 'adjective' };
@@ -222,6 +275,7 @@ const App: React.FC = () => {
         transformedLesson.vocabulary = raw.vocabulary || [];
       }
 
+      // Transform exercises if needed
       if (Array.isArray(raw.exercises)) {
         const exercises: Exercise[] = [];
         const answers: Answer[] = [];
@@ -247,26 +301,32 @@ const App: React.FC = () => {
 
       const finalLesson = transformedLesson as Lesson;
 
+      // Validation
       if (!finalLesson.lesson_id || !finalLesson.title || !Array.isArray(finalLesson.vocabulary) || !Array.isArray(finalLesson.exercises)) {
         alert('❌ Ошибка валидации данных. Убедитесь, что JSON содержит lesson_id, title, vocabulary и exercises.');
         return;
       }
 
+      console.log(`➕ Добавление урока #${finalLesson.lesson_id}: ${finalLesson.title}`);
+
+      // Check for existing lesson
       const existingIndex = lessons.findIndex(l => String(l.lesson_id) === String(finalLesson.lesson_id));
       if (existingIndex !== -1) {
         if (!window.confirm(`Урок #${finalLesson.lesson_id} уже существует. Заменить его?`)) return;
         const updated = [...lessons];
         updated[existingIndex] = finalLesson;
         setLessons(updated);
+        console.log(`✅ Урок #${finalLesson.lesson_id} обновлён`);
       } else {
         setLessons(prev => [...prev, finalLesson]);
+        console.log(`✅ Урок #${finalLesson.lesson_id} добавлен`);
       }
 
       setJsonInput('');
       setCurrentView('dashboard');
       alert('✅ Урок успешно добавлен!');
     } catch (err) {
-      console.error("JSON Parse Error:", err);
+      console.error("❌ Ошибка парсинга JSON:", err);
       alert('❌ Ошибка в формате JSON. Убедитесь, что вы вставили корректный объект в фигурных скобках {}.');
     }
   };
@@ -276,10 +336,14 @@ const App: React.FC = () => {
       alert('Нет уроков для экспорта');
       return;
     }
+    
+    console.log(`📤 Экспорт ${lessons.length} уроков...`);
     const data = {
       export_date: new Date().toISOString(),
+      lessons_count: lessons.length,
       lessons: lessons
     };
+    
     const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
     const url = URL.createObjectURL(blob);
     const link = document.createElement('a');
@@ -287,28 +351,41 @@ const App: React.FC = () => {
     link.download = `german_lessons_backup_${new Date().toISOString().split('T')[0]}.json`;
     link.click();
     URL.revokeObjectURL(url);
+    
+    console.log('✅ Уроки экспортированы');
   };
 
   const importLessons = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
+    
+    console.log(`📥 Импорт из файла: ${file.name}`);
     const reader = new FileReader();
+    
     reader.onload = (event) => {
       try {
         const data = JSON.parse(event.target?.result as string);
         if (data.lessons && Array.isArray(data.lessons)) {
-          if (window.confirm(`Импортировать ${data.lessons.length} уроков?`)) {
+          if (window.confirm(`Импортировать ${data.lessons.length} уроков?\n\nСуществующие уроки с такими же ID будут заменены.`)) {
             const newLessonsMap = new Map();
             lessons.forEach(l => newLessonsMap.set(String(l.lesson_id), l));
             data.lessons.forEach((l: Lesson) => newLessonsMap.set(String(l.lesson_id), l));
-            setLessons(Array.from(newLessonsMap.values()));
+            
+            const importedLessons = Array.from(newLessonsMap.values());
+            setLessons(importedLessons);
+            
+            console.log(`✅ Импортировано ${data.lessons.length} уроков`);
             alert(`✅ Импортировано ${data.lessons.length} уроков`);
           }
+        } else {
+          alert('❌ Неверный формат файла');
         }
       } catch (err) {
-        alert('Ошибка чтения файла');
+        console.error('❌ Ошибка импорта:', err);
+        alert('❌ Ошибка чтения файла');
       }
     };
+    
     reader.readAsText(file);
   };
 
@@ -337,6 +414,26 @@ const App: React.FC = () => {
             <h1 className="text-xl font-bold text-slate-800">DeutschMeister</h1>
           </div>
           <div className="flex items-center space-x-4">
+             {/* Save status indicator */}
+             {saveStatus === 'saving' && (
+               <div className="flex items-center space-x-2 text-blue-600 text-xs">
+                 <div className="w-3 h-3 border-2 border-blue-600 border-t-transparent rounded-full animate-spin"></div>
+                 <span>Сохранение...</span>
+               </div>
+             )}
+             {saveStatus === 'saved' && (
+               <div className="flex items-center space-x-2 text-green-600 text-xs">
+                 <i className="fa-solid fa-check"></i>
+                 <span>Сохранено</span>
+               </div>
+             )}
+             {saveStatus === 'error' && (
+               <div className="flex items-center space-x-2 text-red-600 text-xs">
+                 <i className="fa-solid fa-exclamation-triangle"></i>
+                 <span>Ошибка</span>
+               </div>
+             )}
+             
              {currentView === 'dashboard' && (
                 <div className="flex space-x-2">
                   <button onClick={exportLessons} className="p-2 text-slate-500 hover:text-blue-600 transition-colors" title="Экспорт уроков">
@@ -359,17 +456,22 @@ const App: React.FC = () => {
         {currentView === 'dashboard' && (
           <div className="animate-fade-in">
             <div className="flex justify-between items-center mb-6">
-              <h2 className="text-3xl font-bold text-slate-800">Ваши уроки</h2>
+              <div>
+                <h2 className="text-3xl font-bold text-slate-800">Ваши уроки</h2>
+                <p className="text-sm text-slate-400 mt-1">Всего: {lessons.length} уроков</p>
+              </div>
               <div className="flex space-x-4">
                 <button 
                     onClick={restoreDefaults}
                     className="text-xs font-bold text-blue-400 hover:text-blue-600 uppercase tracking-widest transition-colors"
+                    title="Добавить стандартные уроки (если отсутствуют)"
                 >
                     Вернуть стандартные
                 </button>
                 <button 
                     onClick={clearAllData}
                     className="text-xs font-bold text-red-400 hover:text-red-600 uppercase tracking-widest transition-colors"
+                    title="Удалить ВСЕ уроки и прогресс"
                 >
                     Очистить всё
                 </button>
@@ -390,12 +492,17 @@ const App: React.FC = () => {
                   >
                     <i className="fa-solid fa-trash-can"></i>
                   </button>
-                  <div className="w-12 h-12 bg-blue-50 text-blue-600 rounded-2xl flex items-center justify-center mb-4"><i className="fa-solid fa-book"></i></div>
+                  <div className="w-12 h-12 bg-blue-50 text-blue-600 rounded-2xl flex items-center justify-center mb-4">
+                    <i className="fa-solid fa-book"></i>
+                  </div>
                   <h3 className="text-lg font-bold text-slate-800 pr-8 leading-tight">{lesson.title}</h3>
                   <p className="text-xs text-slate-400 mt-2">Урок №{lesson.lesson_id} • {(lesson.vocabulary?.length || 0)} слов</p>
                 </div>
               ))}
-              <div onClick={() => setCurrentView('add-lesson')} className="border-2 border-dashed border-slate-300 rounded-3xl p-6 flex flex-col items-center justify-center text-slate-400 hover:bg-white hover:border-blue-400 transition-all cursor-pointer min-h-[160px]">
+              <div 
+                onClick={() => setCurrentView('add-lesson')} 
+                className="border-2 border-dashed border-slate-300 rounded-3xl p-6 flex flex-col items-center justify-center text-slate-400 hover:bg-white hover:border-blue-400 transition-all cursor-pointer min-h-[160px]"
+              >
                 <i className="fa-solid fa-plus-circle text-2xl mb-2"></i>
                 <span className="font-semibold text-sm">Новый урок</span>
               </div>
@@ -431,12 +538,18 @@ const App: React.FC = () => {
                    <div>
                      <p className="text-sm text-slate-500 mb-4">📍 Вы на задании {currentGlobalIdx + 1} из {totalTasks}</p>
                      <div className="flex space-x-3">
-                       <button onClick={() => setCurrentView('practice')} className="px-5 py-2.5 bg-blue-600 text-white rounded-xl text-sm font-bold shadow-lg shadow-blue-100">Продолжить</button>
-                       <button onClick={resetLesson} className="px-5 py-2.5 bg-slate-100 text-slate-600 rounded-xl text-sm font-bold">Сначала</button>
+                       <button onClick={() => setCurrentView('practice')} className="px-5 py-2.5 bg-blue-600 text-white rounded-xl text-sm font-bold shadow-lg shadow-blue-100">
+                         {currentGlobalIdx > 0 ? 'Продолжить' : 'Начать'}
+                       </button>
+                       {currentGlobalIdx > 0 && (
+                         <button onClick={resetLesson} className="px-5 py-2.5 bg-slate-100 text-slate-600 rounded-xl text-sm font-bold">Сначала</button>
+                       )}
                      </div>
                    </div>
                 ) : (
-                  <p className="text-sm text-slate-400 italic flex items-center"><i className="fa-solid fa-lock mr-2"></i> Заблокировано (изучите лексику)</p>
+                  <p className="text-sm text-slate-400 italic flex items-center">
+                    <i className="fa-solid fa-lock mr-2"></i> Заблокировано (изучите лексику или пропустите)
+                  </p>
                 )}
               </div>
             </div>
@@ -457,8 +570,8 @@ const App: React.FC = () => {
                      <p className="text-sm text-slate-400">Задание {currentGlobalIdx + 1} из {totalTasks}</p>
                    </div>
                    <div className="flex space-x-4 text-sm font-bold">
-                     <span className="text-green-600">✅ {progress.statistics.correct}</span>
-                     <span className="text-red-500">❌ {progress.statistics.incorrect}</span>
+                     <span className="text-green-600" title="Правильно">✅ {progress.statistics.correct}</span>
+                     <span className="text-red-500" title="Неправильно">❌ {progress.statistics.incorrect}</span>
                    </div>
                 </div>
                 <div className="w-full h-3 bg-slate-200 rounded-full overflow-hidden flex">
@@ -469,7 +582,9 @@ const App: React.FC = () => {
 
               <div className="bg-white p-8 rounded-3xl shadow-sm border border-slate-200">
                 <h3 className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-4">Переведите:</h3>
-                <p className="text-2xl font-bold text-slate-800 leading-relaxed">{selectedLesson.exercises?.[progress.currentExerciseIdx]?.tasks?.[progress.currentTaskIdx] || 'Задание не найдено'}</p>
+                <p className="text-2xl font-bold text-slate-800 leading-relaxed">
+                  {selectedLesson.exercises?.[progress.currentExerciseIdx]?.tasks?.[progress.currentTaskIdx] || 'Задание не найдено'}
+                </p>
               </div>
 
               <div className="flex space-x-4">
@@ -492,7 +607,9 @@ const App: React.FC = () => {
                 <h4 className="text-xs font-bold text-blue-800 mb-2 uppercase">Слова из урока:</h4>
                 <div className="flex flex-wrap gap-2">
                   {(selectedLesson.vocabulary || []).slice(0, 15).map((v, i) => (
-                    <span key={i} className="text-[10px] px-2 py-1 bg-white border border-blue-100 rounded-lg text-blue-600 font-medium">{v.word}</span>
+                    <span key={i} className="text-[10px] px-2 py-1 bg-white border border-blue-100 rounded-lg text-blue-600 font-medium">
+                      {v.word}
+                    </span>
                   ))}
                   {selectedLesson.vocabulary.length > 15 && <span className="text-[10px] text-blue-400 px-1">...</span>}
                 </div>
@@ -525,11 +642,21 @@ const App: React.FC = () => {
                  <p className="text-xs font-bold text-slate-400 uppercase">Ошибки</p>
                  <p className="text-2xl font-bold text-red-500">{progress.statistics.incorrect}</p>
                </div>
+               <div className="col-span-2 bg-slate-50 p-4 rounded-2xl">
+                 <p className="text-xs font-bold text-slate-400 uppercase">Процент правильных</p>
+                 <p className="text-2xl font-bold text-blue-600">
+                   {Math.round((progress.statistics.correct / (progress.statistics.correct + progress.statistics.incorrect)) * 100) || 0}%
+                 </p>
+               </div>
             </div>
 
             <div className="space-y-3">
-              <button onClick={resetLesson} className="w-full py-4 bg-blue-600 text-white rounded-2xl font-bold shadow-lg shadow-blue-200 hover:bg-blue-700 transition-colors">Повторить ошибки</button>
-              <button onClick={() => setCurrentView('dashboard')} className="w-full py-4 bg-slate-100 text-slate-600 rounded-2xl font-bold hover:bg-slate-200 transition-colors">На главную</button>
+              <button onClick={resetLesson} className="w-full py-4 bg-blue-600 text-white rounded-2xl font-bold shadow-lg shadow-blue-200 hover:bg-blue-700 transition-colors">
+                Повторить урок
+              </button>
+              <button onClick={() => setCurrentView('dashboard')} className="w-full py-4 bg-slate-100 text-slate-600 rounded-2xl font-bold hover:bg-slate-200 transition-colors">
+                На главную
+              </button>
             </div>
           </div>
         )}
@@ -537,16 +664,22 @@ const App: React.FC = () => {
         {currentView === 'add-lesson' && (
           <div className="max-w-2xl mx-auto animate-fade-in">
             <h2 className="text-2xl font-bold mb-2">Добавить урок</h2>
-            <p className="text-sm text-slate-500 mb-6">Вставьте JSON-код урока. Если в тексте есть лишние пояснения, приложение постарается их проигнорировать.</p>
+            <p className="text-sm text-slate-500 mb-6">
+              Вставьте JSON-код урока. Приложение автоматически извлечёт данные даже если есть лишний текст.
+            </p>
             <textarea 
               value={jsonInput} 
               onChange={e => setJsonInput(e.target.value)} 
               className="w-full h-80 bg-white border border-slate-200 rounded-3xl p-6 font-mono text-xs mb-6 outline-none focus:ring-2 focus:ring-blue-500 shadow-inner"
-              placeholder='{ "lesson_id": "1", "title": "...", ... }'
+              placeholder='{ "lesson_id": "1", "title": "...", "vocabulary": [...], "exercises": [...], "answers": [...] }'
             />
             <div className="flex space-x-4">
-               <button onClick={() => setCurrentView('dashboard')} className="flex-1 py-3 bg-slate-200 rounded-xl font-bold hover:bg-slate-300 transition-colors">Отмена</button>
-               <button onClick={handleAddLesson} className="flex-2 px-10 py-3 bg-blue-600 text-white rounded-xl font-bold shadow-lg shadow-blue-100 hover:bg-blue-700 transition-colors">Сохранить</button>
+               <button onClick={() => setCurrentView('dashboard')} className="flex-1 py-3 bg-slate-200 rounded-xl font-bold hover:bg-slate-300 transition-colors">
+                 Отмена
+               </button>
+               <button onClick={handleAddLesson} className="flex-2 px-10 py-3 bg-blue-600 text-white rounded-xl font-bold shadow-lg shadow-blue-100 hover:bg-blue-700 transition-colors">
+                 Сохранить
+               </button>
             </div>
           </div>
         )}
@@ -555,6 +688,10 @@ const App: React.FC = () => {
       <style>{`
         @keyframes fade-in { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
         .animate-fade-in { animation: fade-in 0.4s ease-out forwards; }
+        .perspective-1000 { perspective: 1000px; }
+        .transform-style-3d { transform-style: preserve-3d; }
+        .backface-hidden { backface-visibility: hidden; }
+        .rotate-y-180 { transform: rotateY(180deg); }
       `}</style>
     </div>
   );
