@@ -5,8 +5,11 @@ import { INITIAL_LESSONS } from './constants';
 import VocabularyCard from './components/VocabularyCard';
 import TutorChat from './components/TutorChat';
 import TokenIndicator from './components/TokenIndicator';
+import ExamMode from './components/ExamMode';
+import StatisticsDashboard from './components/StatisticsDashboard';
+import { sortByDifficulty } from './services/difficultyTracker';
 
-type ViewMode = 'dashboard' | 'lesson-overview' | 'vocabulary' | 'practice' | 'add-lesson' | 'summary';
+type ViewMode = 'dashboard' | 'lesson-overview' | 'vocabulary' | 'practice' | 'exam' | 'add-lesson' | 'summary';
 
 const LESSONS_STORAGE_KEY = 'german_lessons_v1';
 
@@ -37,6 +40,7 @@ const App: React.FC = () => {
   const [progress, setProgress] = useState<LessonProgress | null>(null);
   const [jsonInput, setJsonInput] = useState('');
   const [expandedVocabulary, setExpandedVocabulary] = useState(false);
+  const [showStatistics, setShowStatistics] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   // Enhanced save with visual feedback
@@ -520,53 +524,95 @@ const App: React.FC = () => {
         )}
 
         {currentView === 'lesson-overview' && selectedLesson && progress && (
-          <div className="max-w-xl mx-auto bg-white rounded-3xl p-8 shadow-md border border-slate-100 animate-fade-in">
-            <h2 className="text-2xl font-bold text-slate-800 mb-6 flex items-center leading-tight">
-              <i className="fa-solid fa-graduation-cap mr-3 text-blue-600 shrink-0"></i> {selectedLesson.title}
-            </h2>
-            
-            <div className="space-y-8">
-              <div className="relative pl-6 border-l-2 border-blue-100">
-                <div className="absolute -left-[9px] top-0 w-4 h-4 rounded-full bg-blue-500"></div>
-                <h4 className="font-bold text-slate-700">Этап 1: Изучение лексики</h4>
-                <p className="text-sm text-slate-500 mb-4">Слов: {(selectedLesson.vocabulary?.length || 0)}</p>
-                <div className="flex space-x-3">
-                  <button onClick={handleStartVocab} className="px-5 py-2.5 bg-blue-600 text-white rounded-xl text-sm font-bold shadow-lg shadow-blue-100">
-                    {progress.vocabCompleted ? 'Повторить' : 'Начать'}
-                  </button>
-                  {!progress.vocabCompleted && !progress.vocabSkipped && (
-                    <button onClick={handleSkipVocab} className="px-5 py-2.5 bg-slate-100 text-slate-600 rounded-xl text-sm font-bold">Пропустить →</button>
+          <div className="max-w-2xl mx-auto bg-white rounded-3xl p-8 shadow-md border border-slate-100 animate-fade-in">
+            <div className="flex justify-between items-center mb-6">
+              <h2 className="text-2xl font-bold text-slate-800 flex items-center leading-tight">
+                <i className="fa-solid fa-graduation-cap mr-3 text-blue-600 shrink-0"></i> {selectedLesson.title}
+              </h2>
+              <button
+                onClick={() => setShowStatistics(!showStatistics)}
+                className={`px-4 py-2 rounded-xl text-sm font-bold transition-colors ${
+                  showStatistics
+                    ? 'bg-blue-600 text-white'
+                    : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+                }`}
+                title="Показать/скрыть статистику"
+              >
+                <i className="fa-solid fa-chart-bar mr-2"></i> Статистика
+              </button>
+            </div>
+
+            {showStatistics ? (
+              <StatisticsDashboard lessonId={selectedLesson.lesson_id} />
+            ) : (
+              <div className="space-y-8">
+                <div className="relative pl-6 border-l-2 border-blue-100">
+                  <div className="absolute -left-[9px] top-0 w-4 h-4 rounded-full bg-blue-500"></div>
+                  <h4 className="font-bold text-slate-700">Этап 1: Изучение лексики</h4>
+                  <p className="text-sm text-slate-500 mb-4">Слов: {(selectedLesson.vocabulary?.length || 0)}</p>
+                  <div className="flex space-x-3">
+                    <button onClick={handleStartVocab} className="px-5 py-2.5 bg-blue-600 text-white rounded-xl text-sm font-bold shadow-lg shadow-blue-100">
+                      {progress.vocabCompleted ? 'Повторить' : 'Начать'}
+                    </button>
+                    {!progress.vocabCompleted && !progress.vocabSkipped && (
+                      <button onClick={handleSkipVocab} className="px-5 py-2.5 bg-slate-100 text-slate-600 rounded-xl text-sm font-bold">Пропустить →</button>
+                    )}
+                  </div>
+                </div>
+
+                <div className="relative pl-6 border-l-2 border-slate-100">
+                  <div className={`absolute -left-[9px] top-0 w-4 h-4 rounded-full ${progress.vocabCompleted || progress.vocabSkipped ? 'bg-blue-500' : 'bg-slate-300'}`}></div>
+                  <h4 className="font-bold text-slate-700">Этап 2: Режим экзамена</h4>
+                  {(progress.vocabCompleted || progress.vocabSkipped) ? (
+                    <p className="text-sm text-slate-500 mb-4">Проверьте себя на словах урока</p>
+                  ) : (
+                    <p className="text-sm text-slate-400 italic flex items-center mb-4">
+                      <i className="fa-solid fa-lock mr-2"></i> Заблокировано (изучите лексику или пропустите)
+                    </p>
+                  )}
+                  {(progress.vocabCompleted || progress.vocabSkipped) && (
+                    <button onClick={() => setCurrentView('exam')} className="px-5 py-2.5 bg-amber-600 text-white rounded-xl text-sm font-bold shadow-lg shadow-amber-100 hover:bg-amber-700">
+                      📝 Начать экзамен
+                    </button>
+                  )}
+                </div>
+
+                <div className="relative pl-6 border-l-2 border-slate-100">
+                  <div className={`absolute -left-[9px] top-0 w-4 h-4 rounded-full ${progress.vocabCompleted || progress.vocabSkipped ? 'bg-blue-500' : 'bg-slate-300'}`}></div>
+                  <h4 className="font-bold text-slate-700">Этап 3: Практика</h4>
+                  {(progress.vocabCompleted || progress.vocabSkipped) ? (
+                     <div>
+                       <p className="text-sm text-slate-500 mb-4">📍 Вы на задании {currentGlobalIdx + 1} из {totalTasks}</p>
+                       <div className="flex space-x-3">
+                         <button onClick={() => setCurrentView('practice')} className="px-5 py-2.5 bg-blue-600 text-white rounded-xl text-sm font-bold shadow-lg shadow-blue-100">
+                           {currentGlobalIdx > 0 ? 'Продолжить' : 'Начать'}
+                         </button>
+                         {currentGlobalIdx > 0 && (
+                           <button onClick={resetLesson} className="px-5 py-2.5 bg-slate-100 text-slate-600 rounded-xl text-sm font-bold">Сначала</button>
+                         )}
+                       </div>
+                     </div>
+                  ) : (
+                    <p className="text-sm text-slate-400 italic flex items-center">
+                      <i className="fa-solid fa-lock mr-2"></i> Заблокировано (изучите лексику или пропустите)
+                    </p>
                   )}
                 </div>
               </div>
-
-              <div className="relative pl-6 border-l-2 border-slate-100">
-                <div className={`absolute -left-[9px] top-0 w-4 h-4 rounded-full ${progress.vocabCompleted || progress.vocabSkipped ? 'bg-blue-500' : 'bg-slate-300'}`}></div>
-                <h4 className="font-bold text-slate-700">Этап 2: Практика</h4>
-                {(progress.vocabCompleted || progress.vocabSkipped) ? (
-                   <div>
-                     <p className="text-sm text-slate-500 mb-4">📍 Вы на задании {currentGlobalIdx + 1} из {totalTasks}</p>
-                     <div className="flex space-x-3">
-                       <button onClick={() => setCurrentView('practice')} className="px-5 py-2.5 bg-blue-600 text-white rounded-xl text-sm font-bold shadow-lg shadow-blue-100">
-                         {currentGlobalIdx > 0 ? 'Продолжить' : 'Начать'}
-                       </button>
-                       {currentGlobalIdx > 0 && (
-                         <button onClick={resetLesson} className="px-5 py-2.5 bg-slate-100 text-slate-600 rounded-xl text-sm font-bold">Сначала</button>
-                       )}
-                     </div>
-                   </div>
-                ) : (
-                  <p className="text-sm text-slate-400 italic flex items-center">
-                    <i className="fa-solid fa-lock mr-2"></i> Заблокировано (изучите лексику или пропустите)
-                  </p>
-                )}
-              </div>
-            </div>
+            )}
           </div>
         )}
 
         {currentView === 'vocabulary' && selectedLesson && (
-          <VocabularyCard vocabulary={selectedLesson.vocabulary || []} onFinish={handleVocabFinish} />
+          <VocabularyCard vocabulary={sortByDifficulty(selectedLesson.vocabulary || [], selectedLesson.lesson_id)} onFinish={handleVocabFinish} lessonId={selectedLesson.lesson_id} />
+        )}
+
+        {currentView === 'exam' && selectedLesson && (
+          <ExamMode 
+            vocabulary={selectedLesson.vocabulary || []} 
+            lessonId={selectedLesson.lesson_id}
+            onFinish={() => setCurrentView('lesson-overview')}
+          />
         )}
 
         {currentView === 'practice' && selectedLesson && progress && (

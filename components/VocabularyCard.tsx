@@ -1,21 +1,57 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Vocabulary } from '../types';
+import { isWordDifficult, toggleDifficultWord } from '../services/difficultyTracker';
+import { recordWordView } from '../services/vocabularyStatistics';
 
 interface VocabularyCardProps {
   vocabulary: Vocabulary[];
   onFinish: () => void;
+  lessonId: string;
 }
 
-const VocabularyCard: React.FC<VocabularyCardProps> = ({ vocabulary, onFinish }) => {
+const VocabularyCard: React.FC<VocabularyCardProps> = ({ vocabulary, onFinish, lessonId }) => {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [isFlipped, setIsFlipped] = useState(false);
+  const [isDifficultWord, setIsDifficultWord] = useState(false);
+  const cardStartTimeRef = useRef<number>(Date.now());
+
+  const current = vocabulary[currentIndex];
+
+  // Проверяем, отмечено ли текущее слово как сложное при смене индекса
+  // И записываем время, потраченное на предыдущую карточку
+  useEffect(() => {
+    if (currentIndex > 0) {
+      const timeSpent = (Date.now() - cardStartTimeRef.current) / 1000; // в секундах
+      const prevWord = vocabulary[currentIndex - 1];
+      recordWordView(
+        lessonId,
+        prevWord.word,
+        prevWord.translation,
+        timeSpent,
+        isWordDifficult(lessonId, prevWord.word)
+      );
+    }
+    
+    cardStartTimeRef.current = Date.now(); // Сбросить таймер для новой карточки
+    setIsDifficultWord(isWordDifficult(lessonId, current.word));
+    setIsFlipped(false);
+  }, [currentIndex, current.word, lessonId]);
 
   const handleNext = () => {
     if (currentIndex < vocabulary.length - 1) {
       setCurrentIndex(prev => prev + 1);
       setIsFlipped(false);
     } else {
+      // Записываем время последней карточки перед завершением
+      const timeSpent = (Date.now() - cardStartTimeRef.current) / 1000;
+      recordWordView(
+        lessonId,
+        current.word,
+        current.translation,
+        timeSpent,
+        isDifficultWord
+      );
       onFinish();
     }
   };
@@ -27,7 +63,10 @@ const VocabularyCard: React.FC<VocabularyCardProps> = ({ vocabulary, onFinish })
     }
   };
 
-  const current = vocabulary[currentIndex];
+  const handleToggleDifficult = () => {
+    const newState = toggleDifficultWord(lessonId, current.word);
+    setIsDifficultWord(newState);
+  };
 
   const getTypeColor = (type: string) => {
     switch(type) {
@@ -79,6 +118,17 @@ const VocabularyCard: React.FC<VocabularyCardProps> = ({ vocabulary, onFinish })
           className="flex-1 py-4 bg-white border border-slate-200 rounded-2xl font-bold text-slate-600 hover:bg-slate-50 disabled:opacity-50 transition-colors"
         >
           <i className="fa-solid fa-arrow-left mr-2"></i> Назад
+        </button>
+        <button 
+          onClick={(e) => { e.stopPropagation(); handleToggleDifficult(); }}
+          className={`px-4 py-4 rounded-2xl font-bold transition-colors ${
+            isDifficultWord
+              ? 'bg-amber-100 text-amber-700 border-2 border-amber-300'
+              : 'bg-white border border-slate-200 text-slate-600 hover:bg-slate-50'
+          }`}
+          title={isDifficultWord ? 'Удалить из сложных' : 'Отметить как сложное'}
+        >
+          ⭐
         </button>
         <button 
           onClick={(e) => { e.stopPropagation(); handleNext(); }}
