@@ -26,7 +26,7 @@ export const getTutorResponse = async (
     correct_answer: correctAnswer
   };
 
-  const model = "gemini-3-flash-preview";
+  const model = "gemini-2.0-flash";
   
   const response = await ai.models.generateContent({
     model,
@@ -54,7 +54,7 @@ export const getGeneralResponse = async (
     vocabulary: lesson.vocabulary
   };
 
-  const model = "gemini-3-flash-preview";
+  const model = "gemini-2.0-flash";
 
   const response = await ai.models.generateContent({
     model,

@@ -453,5 +453,125 @@
         ]
       }
     ]
+  },
+    {
+    "lesson_id": "14",
+    "title": "14. Союзы и союзные слова",
+    "vocabulary": [
+      { "word": "erklären", "translation": "объяснять", "type": "verb" },
+      { "word": "verstehen", "translation": "понимать", "type": "verb" },
+      { "word": "abschließen", "translation": "заканчивать", "type": "verb" },
+      { "word": "schließen", "translation": "закрываться", "type": "verb" },
+      { "word": "träumen", "translation": "мечтать, сниться", "type": "verb" },
+      { "word": "bekommen", "translation": "получать", "type": "verb" },
+      { "word": "sagen", "translation": "сказать", "type": "verb" },
+      { "word": "Sport treiben", "translation": "заниматься спортом", "type": "phrase" },
+      { "word": "heiraten", "translation": "жениться", "type": "verb" },
+
+      { "word": "froh", "translation": "радостный", "type": "adjective" },
+      { "word": "wunderbar", "translation": "прекрасный", "type": "adjective" },
+      { "word": "schlecht", "translation": "плохой", "type": "adjective" },
+
+      { "word": "der Film", "translation": "фильм", "type": "noun" },
+      { "word": "die Fernsehserie", "translation": "сериал", "type": "noun" },
+      { "word": "das Theater", "translation": "театр", "type": "noun" },
+      { "word": "die Süßigkeit", "translation": "сладость", "type": "noun" },
+      { "word": "die Sporthalle", "translation": "спортивный зал", "type": "noun" },
+      { "word": "das Schwimmbad", "translation": "бассейн", "type": "noun" },
+      { "word": "der Unterricht", "translation": "урок, занятие", "type": "noun" },
+      { "word": "der Artikel", "translation": "статья", "type": "noun" },
+      { "word": "der Urlaub", "translation": "отпуск", "type": "noun" },
+      { "word": "die Ferien", "translation": "каникулы", "type": "noun" },
+      { "word": "die Universität", "translation": "университет", "type": "noun" },
+      { "word": "das Geschäft", "translation": "магазин", "type": "noun" },
+      { "word": "das Wetter", "translation": "погода", "type": "noun" },
+
+      { "word": "bald", "translation": "скоро", "type": "adverb" },
+      { "word": "auch", "translation": "тоже", "type": "adverb" },
+      { "word": "zuerst", "translation": "сначала", "type": "adverb" },
+      { "word": "schneller", "translation": "быстрее", "type": "adverb" }
+    ],
+    "exercises": [
+      {
+        "title": "Упражнение 1. Переведите на немецкий язык",
+        "tasks": [
+          "Мы пойдём в кино или в парк?",
+          "Это не моя книга, а его книга.",
+          "Он покупает газету, и она тоже.",
+          "Я не люблю лето, потому что очень жарко.",
+          "Его сестра любит фильмы, но не сериалы.",
+          "Регина радостная, потому что она идёт в театр.",
+          "Погода сегодня хорошая, поэтому мы пойдём гулять.",
+          "Я могу объяснить это, но он не понимает.",
+          "Ты делаешь сейчас домашнее задание, иначе не получишь никаких сладостей.",
+          "Она плавает в бассейне, после этого она должна пойти в спортзал.",
+          "Марина хочет написать статью, затем выпить кофе.",
+          "Маркус сегодня не придёт на работу, так как у него отпуск.",
+          "У Петера каникулы, поэтому он гуляет каждый день.",
+          "Я могу быть учителем, когда закончу университет.",
+          "Он не думает, что она работает в школе.",
+          "Я счастлива, когда они поют.",
+          "Мы должны быстрее идти, потому что магазин скоро закроется.",
+          "Девочка мечтает, что она получает куклу.",
+          "Врач сказал, что я должна заниматься спортом.",
+          "Мой друг не женится, потому что у него нет подруги."
+        ]
+      },
+      {
+        "title": "Упражнение 2. Соедините предложения",
+        "tasks": [
+          "Gehen wir Fußball spielen? Bleiben wir hier? (oder)",
+          "Regina ist krank. Es ist sehr kalt. (weil)",
+          "Zuerst machst du Hausaufgaben. Spielen wir Schach. (dann)",
+          "Martin hat Geburtstag. Seine Eltern schenken ein Fahrrad. (und)",
+          "Ich telefoniere mit Anna. Sie ist nicht zu Hause. (aber)",
+          "Kerstin ist glücklich. Sie hat Urlaub. (denn)",
+          "Das Wetter ist nicht schlecht heute. Wir gehen spazieren. (deshalb)",
+          "Ich bin so froh. Ich habe Klavierunterricht. (dass)",
+          "Ich habe Zeit. Ich lese Bücher. (wenn)"
+        ]
+      }
+    ],
+    "answers": [
+      {
+        "exercise": 1,
+        "solutions": [
+          "Gehen wir ins Kino oder in den Park?",
+          "Das ist nicht mein Buch, sondern sein Buch.",
+          "Er kauft eine Zeitung, und sie auch.",
+          "Ich mag den Sommer nicht, weil es sehr heiß ist.",
+          "Seine Schwester liebt Filme, aber keine Serien.",
+          "Regina ist froh, weil sie ins Theater geht.",
+          "Das Wetter ist heute gut, deshalb gehen wir spazieren.",
+          "Ich kann das erklären, aber er versteht es nicht.",
+          "Du machst jetzt Hausaufgaben, sonst bekommst du keine Süßigkeiten.",
+          "Sie schwimmt im Schwimmbad, danach muss sie in die Sporthalle gehen.",
+          "Marina möchte einen Artikel schreiben und dann Kaffee trinken.",
+          "Markus kommt heute nicht zur Arbeit, weil er Urlaub hat.",
+          "Peter hat Ferien, deshalb geht er jeden Tag spazieren.",
+          "Ich kann Lehrerin sein, wenn ich die Universität abschließe.",
+          "Er denkt nicht, dass sie in der Schule arbeitet.",
+          "Ich bin glücklich, wenn sie singen.",
+          "Wir müssen schneller gehen, weil das Geschäft bald schließt.",
+          "Das Mädchen träumt, dass sie eine Puppe bekommt.",
+          "Der Arzt hat gesagt, dass ich Sport treiben soll.",
+          "Mein Freund heiratet nicht, weil er keine Freundin hat."
+        ]
+      },
+      {
+        "exercise": 2,
+        "solutions": [
+          "Gehen wir Fußball spielen oder bleiben wir hier?",
+          "Regina ist krank, weil es sehr kalt ist.",
+          "Zuerst machst du Hausaufgaben, dann spielen wir Schach.",
+          "Martin hat Geburtstag, und seine Eltern schenken ihm ein Fahrrad.",
+          "Ich telefoniere mit Anna, aber sie ist nicht zu Hause.",
+          "Kerstin ist glücklich, denn sie hat Urlaub.",
+          "Das Wetter ist heute nicht schlecht, deshalb gehen wir spazieren.",
+          "Ich bin so froh, dass ich Klavierunterricht habe.",
+          "Wenn ich Zeit habe, lese ich Bücher."
+        ]
+      }
+    ]
   }
 ]

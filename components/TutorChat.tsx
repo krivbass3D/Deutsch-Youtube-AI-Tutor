@@ -1,6 +1,8 @@
 
 import React, { useState, useRef, useEffect } from 'react';
 import { getTutorResponse } from '../services/geminiService';
+import { validateAnswer } from '../services/validationService';
+import { trackAPIRequest, trackLocalValidation } from '../services/tokenTracker';
 import { Lesson, ChatMessage } from '../types';
 
 interface TutorChatProps {
@@ -43,10 +45,43 @@ const TutorChat: React.FC<TutorChatProps> = ({ lesson, currentExerciseIndex, cur
     setIsLoading(true);
 
     try {
-      const history = messages.map(m => ({
-        role: m.role,
-        parts: [{ text: m.content }]
-      }));
+      // Получаем правильный ответ из данных урока
+      const currentExercise = lesson.exercises[currentExerciseIndex];
+      const correctAnswer = lesson.answers
+        .find(a => a.exercise === (currentExerciseIndex + 1))
+        ?.solutions[currentTaskIndex];
+
+      // 🚀 Сначала проверяем локально (без API)
+      if (correctAnswer) {
+        const validationResult = validateAnswer(currentInput, correctAnswer);
+        
+        if (validationResult && !validationResult.shouldCallAPI) {
+          // Ответ проверен локально - показываем результат БЕЗ API
+          const modelMsg: ChatMessage = {
+            role: 'model',
+            content: validationResult.message,
+            timestamp: Date.now(),
+          };
+
+          setMessages(prev => [...prev, modelMsg]);
+          onFeedback(validationResult.isCorrect, currentInput);
+          trackLocalValidation(); // 📊 Запись локальной валидации
+          setIsLoading(false);
+          return;
+        }
+      }
+
+      // Если локальная валидация не прошла - вызываем API
+      // Ограничиваем историю последними 3 сообщениями для экономии токенов
+      const history = messages
+        .slice(-3)
+        .map(m => ({
+          role: m.role,
+          parts: [{ text: m.content }]
+        }));
+
+      // 📊 Записываем запрос ПЕРЕД вызовом API (в случае ошибки тоже считаем)
+      trackAPIRequest();
 
       const responseText = await getTutorResponse(
         lesson,
@@ -70,11 +105,25 @@ const TutorChat: React.FC<TutorChatProps> = ({ lesson, currentExerciseIndex, cur
         onFeedback(false, currentInput);
       }
 
-    } catch (error) {
+    } catch (error: any) {
       console.error(error);
+      
+      let errorContent = "Произошла ошибка при связи с репетитором.";
+      
+      // Обработка ошибки превышения лимита API
+      const errorMessage = error?.message || JSON.stringify(error);
+      
+      if (errorMessage.includes('429') || errorMessage.includes('RESOURCE_EXHAUSTED') || errorMessage.includes('exceeded your current quota')) {
+        const retryMatch = errorMessage.match(/Retry in ([\d.]+)s/i);
+        const retryTime = retryMatch ? Math.ceil(parseFloat(retryMatch[1])) : 60;
+        errorContent = `⏳ Лимит запросов к AI превышен.\n\nПопробуйте через ${retryTime} секунд или обновите API ключ на платный тариф.\n\n🔗 https://ai.google.dev/pricing`;
+      } else if (errorMessage.includes('API_KEY')) {
+        errorContent = '❌ Ошибка: API ключ не установлен или неверный.\n\nУбедитесь, что переменная окружения API_KEY установлена.';
+      }
+      
       const errorMsg: ChatMessage = {
         role: 'model',
-        content: "Произошла ошибка при связи с репетитором.",
+        content: errorContent,
         timestamp: Date.now(),
       };
       setMessages(prev => [...prev, errorMsg]);

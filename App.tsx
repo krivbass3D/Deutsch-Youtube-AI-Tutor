@@ -4,6 +4,7 @@ import { Lesson, LessonProgress, Vocabulary, Exercise, Answer } from './types';
 import { INITIAL_LESSONS } from './constants';
 import VocabularyCard from './components/VocabularyCard';
 import TutorChat from './components/TutorChat';
+import TokenIndicator from './components/TokenIndicator';
 
 type ViewMode = 'dashboard' | 'lesson-overview' | 'vocabulary' | 'practice' | 'add-lesson' | 'summary';
 
@@ -416,6 +417,12 @@ const App: React.FC = () => {
             <h1 className="text-xl font-bold text-slate-800">DeutschMeister</h1>
           </div>
           <div className="flex items-center space-x-4">
+             {/* API Request Limit Indicator */}
+             <div className="flex items-center space-x-2">
+               <span className="text-xs text-slate-600 font-medium">Запросы AI:</span>
+               <TokenIndicator />
+             </div>
+             
              {/* Save status indicator */}
              {saveStatus === 'saving' && (
                <div className="flex items-center space-x-2 text-blue-600 text-xs">
