@@ -1,7 +1,7 @@
 import { Lesson } from './types';
 import lessonsData from './lessons.json';
 
-export const INITIAL_LESSONS: Lesson[] = lessonsData;
+export const INITIAL_LESSONS: Lesson[] = lessonsData as Lesson[];
 
 export const SYSTEM_PROMPT = `
 # СИСТЕМНЫЙ ПРОМПТ: ИИ-РЕПЕТИТОР НЕМЕЦКОГО ЯЗЫКА

@@ -7,6 +7,8 @@ import TutorChat from './components/TutorChat';
 import TokenIndicator from './components/TokenIndicator';
 import ExamMode from './components/ExamMode';
 import StatisticsDashboard from './components/StatisticsDashboard';
+import GlobalDashboard from './components/GlobalDashboard';
+import LessonCard from './components/LessonCard';
 import { sortBySpacedRepetition } from './services/spacedRepetition';
 
 type ViewMode = 'dashboard' | 'lesson-overview' | 'vocabulary' | 'practice' | 'exam' | 'add-lesson' | 'summary';
@@ -77,6 +79,45 @@ const App: React.FC = () => {
     }
     setCurrentView('lesson-overview');
   };
+
+  const getLessonProgressFromStorage = (lessonId: string): LessonProgress | null => {
+    try {
+      const saved = localStorage.getItem(`lesson_${lessonId}_progress`);
+      if (saved) {
+        return JSON.parse(saved) as LessonProgress;
+      }
+    } catch (e) {
+      console.error('Ошибка загрузки прогресса:', e);
+    }
+    return null;
+  };
+
+  // Состояние для триггера обновления прогресса
+  const [progressUpdateTrigger, setProgressUpdateTrigger] = useState(0);
+
+  // Получаем прогресс для всех уроков (обновляется при изменении progress или lessons)
+  const lessonProgress = useMemo(() => {
+    const result: Record<string, LessonProgress> = {};
+    lessons.forEach(lesson => {
+      const prog = getLessonProgressFromStorage(lesson.lesson_id);
+      if (prog) {
+        result[lesson.lesson_id] = prog;
+      }
+    });
+    console.log('🔄 Обновлён прогресс для всех уроков:', Object.keys(result).length);
+    return result;
+  }, [lessons, progressUpdateTrigger]);
+
+  // Пересчитываем прогресс при изменении progress текущего урока
+  useEffect(() => {
+    if (progress && selectedLesson) {
+      // Запускаем пересчет всех прогрессов с задержкой для гарантии сохранения в localStorage
+      const timer = setTimeout(() => {
+        setProgressUpdateTrigger(prev => prev + 1);
+      }, 100);
+      return () => clearTimeout(timer);
+    }
+  }, [progress, selectedLesson]);
 
   const initializeProgress = () => {
     setProgress({
@@ -467,13 +508,26 @@ const App: React.FC = () => {
 
       <main className="max-w-5xl mx-auto px-6 pt-8">
         {currentView === 'dashboard' && (
-          <div className="animate-fade-in">
-            <div className="flex justify-between items-center mb-6">
-              <div>
-                <h2 className="text-3xl font-bold text-slate-800">Ваши уроки</h2>
-                <p className="text-sm text-slate-400 mt-1">Всего: {lessons.length} уроков</p>
-              </div>
-              <div className="flex space-x-4">
+          <div className="animate-fade-in space-y-8">
+            {/* Глобальный прогресс */}
+            <GlobalDashboard 
+              lessons={lessons}
+              lessonsProgress={Object.fromEntries(
+                lessons.map(l => [
+                  `lesson_${l.lesson_id}_progress`,
+                  getLessonProgressFromStorage(l.lesson_id)
+                ]).filter(([_, p]) => p !== null)
+              )}
+              onSelectLesson={(lessonId) => {
+                const lesson = lessons.find(l => l.lesson_id === lessonId);
+                if (lesson) selectLesson(lesson);
+              }}
+            />
+
+            {/* Список уроков */}
+            <div>
+              <h2 className="text-2xl font-bold text-slate-800 mb-4">📚 Все уроки</h2>
+              <div className="flex justify-end gap-2 mb-4">
                 <button 
                     onClick={restoreDefaults}
                     className="text-xs font-bold text-blue-400 hover:text-blue-600 uppercase tracking-widest transition-colors"
@@ -489,35 +543,24 @@ const App: React.FC = () => {
                     Очистить всё
                 </button>
               </div>
-            </div>
             
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {lessons.map(lesson => (
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                {lessons.map(lesson => (
+                  <LessonCard
+                    key={lesson.lesson_id}
+                    lesson={lesson}
+                    progress={lessonProgress[lesson.lesson_id] || null}
+                    onSelect={selectLesson}
+                    onDelete={deleteLesson}
+                  />
+                ))}
                 <div 
-                  key={lesson.lesson_id} 
-                  onClick={() => selectLesson(lesson)} 
-                  className="bg-white p-6 rounded-3xl border border-slate-200 hover:border-blue-300 transition-all cursor-pointer group shadow-sm relative overflow-hidden"
+                  onClick={() => setCurrentView('add-lesson')} 
+                  className="border-2 border-dashed border-slate-300 rounded-3xl p-6 flex flex-col items-center justify-center text-slate-400 hover:bg-white hover:border-blue-400 transition-all cursor-pointer min-h-[160px]"
                 >
-                  <button 
-                    onClick={(e) => deleteLesson(e, lesson.lesson_id)}
-                    className="absolute top-2 right-2 w-10 h-10 flex items-center justify-center text-slate-300 hover:text-red-500 transition-colors z-20 opacity-0 group-hover:opacity-100"
-                    title="Удалить урок"
-                  >
-                    <i className="fa-solid fa-trash-can"></i>
-                  </button>
-                  <div className="w-12 h-12 bg-blue-50 text-blue-600 rounded-2xl flex items-center justify-center mb-4">
-                    <i className="fa-solid fa-book"></i>
-                  </div>
-                  <h3 className="text-lg font-bold text-slate-800 pr-8 leading-tight">{lesson.title}</h3>
-                  <p className="text-xs text-slate-400 mt-2">Урок №{lesson.lesson_id} • {(lesson.vocabulary?.length || 0)} слов</p>
+                  <i className="fa-solid fa-plus-circle text-2xl mb-2"></i>
+                  <span className="font-semibold text-sm">Новый урок</span>
                 </div>
-              ))}
-              <div 
-                onClick={() => setCurrentView('add-lesson')} 
-                className="border-2 border-dashed border-slate-300 rounded-3xl p-6 flex flex-col items-center justify-center text-slate-400 hover:bg-white hover:border-blue-400 transition-all cursor-pointer min-h-[160px]"
-              >
-                <i className="fa-solid fa-plus-circle text-2xl mb-2"></i>
-                <span className="font-semibold text-sm">Новый урок</span>
               </div>
             </div>
           </div>

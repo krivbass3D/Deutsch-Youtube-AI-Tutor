@@ -44,7 +44,11 @@ export const getSpacedRepetitionData = (
     const saved = localStorage.getItem(key);
     
     if (saved) {
-      return JSON.parse(saved);
+      const data = JSON.parse(saved);
+      console.log(`      ✓ "${word}": найдено reviewCount=${data.reviewCount}`);
+      return data;
+    } else {
+      console.log(`      ✗ "${word}": НЕ найдено в localStorage`);
     }
   } catch (e) {
     console.error('❌ Ошибка загрузки SR данных:', e);
@@ -91,6 +95,8 @@ export const recordSuccessfulReview = (
   const data = getSpacedRepetitionData(lessonId, word, translation, type);
   const isDifficult = isWordDifficult(lessonId, word);
 
+  console.log(`🔍 recordSuccessfulReview: "${word}" в уроке #${lessonId}, текущий reviewCount: ${data.reviewCount}`);
+
   data.lastReviewDate = new Date().toISOString();
   data.reviewCount++;
   
@@ -115,7 +121,12 @@ export const recordSuccessfulReview = (
 
   saveSpacedRepetitionData(lessonId, data);
   
-  console.log(`✅ Успешный повтор: "${word}" (${data.reviewCount}), следующий через ${data.interval} дней`);
+  console.log(`✅ Успешный повтор: "${word}" (${data.reviewCount}), isLearned: ${data.isLearned}, следующий через ${data.interval} дней`);
+  
+  // Диспатч события об обновлении SR данных, чтобы компоненты могли пересчитать метрики
+  window.dispatchEvent(new CustomEvent('srDataChanged', { 
+    detail: { lessonId, word, reviewCount: data.reviewCount, isLearned: data.isLearned }
+  }));
   
   return data;
 };
@@ -242,14 +253,26 @@ export const getSpacedRepetitionStats = (
   let learnedWords = 0; // выученные (5+ повторов)
   let difficultWords = 0;
 
+  console.log(`\n🔍 getSpacedRepetitionStats #${lessonId}: анализирую ${totalWords} слов...`);
+
   vocabulary.forEach(item => {
+    // Получаем SR данные напрямую, а не через vocabularyStatistics
+    const srData = getSpacedRepetitionData(lessonId, item.word, item.translation, item.type);
+    
+    console.log(`  📄 "${item.word}": reviewCount=${srData.reviewCount}, isLearned=${srData.isLearned}, isDue=${srData.isDue}`);
+    
     if (isWordDue(lessonId, item.word)) dueWords++;
     
-    const stats = getWordStat(lessonId, item.word);
-    if (stats && stats.repeatCount >= 5) learnedWords++;
+    // Используем reviewCount из SR, а не repeatCount из словаря
+    if (srData.reviewCount >= 5 || srData.isLearned) {
+      learnedWords++;
+      console.log(`    ✅ ВЫУЧЕНО!`);
+    }
     
     if (isWordDifficult(lessonId, item.word)) difficultWords++;
   });
+
+  console.log(`📊 ИТОГ: learnedWords=${learnedWords}/${totalWords}\n`);
 
   return {
     totalWords,

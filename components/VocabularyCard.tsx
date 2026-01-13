@@ -114,9 +114,12 @@ const VocabularyCard: React.FC<VocabularyCardProps> = ({ vocabulary, onFinish, l
         : `❌ Неправильно. "${current.translation}" = "${current.word}". Вы ответили: "${userAnswer}"`;
     }
 
+    console.log(`📝 handleTestAnswer: слово="${current.word}", ответ="${userAnswer}", isCorrect=${isCorrect}`);
+
     // 🔄 Интеграция Spaced Repetition алгоритма
     if (isCorrect) {
       // Успешный повтор → увеличиваем интервал повторения
+      console.log(`  → Вызов recordSuccessfulReview для "${current.word}"`);
       recordSuccessfulReview(
         lessonId,
         current.word,
@@ -125,6 +128,7 @@ const VocabularyCard: React.FC<VocabularyCardProps> = ({ vocabulary, onFinish, l
       );
     } else {
       // Ошибка → сбрасываем прогресс
+      console.log(`  → Вызов recordFailedReview для "${current.word}"`);
       recordFailedReview(
         lessonId,
         current.word,
