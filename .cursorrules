@@ -1,0 +1,294 @@
+# DeutschMeister - Claude Development Rules
+
+## 🎯 Цель проекта
+Интерактивное веб-приложение для изучения немецкого языка с AI-репетитором (Google Gemini 2.0 Flash).
+
+## 🏗️ Архитектура
+- **Frontend**: React 19 + TypeScript 5.8 + Vite 6 + Tailwind CSS
+- **AI**: Google Gemini API (gemini-2.0-flash-exp)
+- **Хранение**: LocalStorage (уроки, прогресс, статистика)
+- **Стиль**: Utility-first CSS (Tailwind), Font Awesome иконки
+
+## 📂 Ключевые файлы
+
+### Критически важные (НЕ ТРОГАТЬ без необходимости)
+- `App.tsx` - главный компонент (500+ строк), вся логика приложения
+- `constants.ts` - SYSTEM_PROMPT для AI + начальные уроки
+- `types.ts` - все TypeScript интерфейсы проекта
+
+### Компоненты
+- `components/TutorChat.tsx` - чат с AI-репетитором
+- `components/VocabularyCard.tsx` - карточки слов (обучение + тестирование)
+- `components/ExamMode.tsx` - режим экзамена
+
+### Сервисы
+- `services/geminiService.ts` - интеграция с Gemini API
+- `services/validationService.ts` - локальная проверка (экономия 70% API)
+- `services/spacedRepetition.ts` - алгоритм SM-2
+
+### Конфигурация
+- `.env` - API ключ Gemini (НЕ в git!)
+- `vite.config.ts` - настройки Vite
+- `tsconfig.json` - настройки TypeScript
+
+## 🎨 Стандарты кода
+
+### TypeScript
+- **Строгая типизация**: Всегда используй явные типы
+- **Интерфейсы из types.ts**: НЕ дублируй типы
+- **Null safety**: Проверяй на null/undefined перед доступом
+
+### React
+- **Только функциональные компоненты** + хуки
+- **useState, useEffect, useMemo, useRef** - предпочитаемые хуки
+- **Props деструктуризация**: `({ lesson, onComplete })` 
+- **Key prop**: Всегда при map() над массивами
+
+### Стили (Tailwind CSS)
+- **Utility classes only**: Никаких кастомных CSS файлов
+- **Responsive design**: `sm:`, `md:`, `lg:` префиксы
+- **Цветовая схема**: 
+  - Primary: `bg-blue-500`, `text-blue-600`
+  - Success: `bg-green-500`, `text-green-600`
+  - Error: `bg-red-500`, `text-red-600`
+  - Warning: `bg-yellow-500`, `text-yellow-600`
+- **Консистентность**: Используй те же классы что в App.tsx
+
+### Иконки (Font Awesome)
+- **Формат**: `<i className="fas fa-icon-name"></i>`
+- **Размеры**: `text-xl`, `text-2xl`, `text-3xl`
+- **Цвета**: через Tailwind классы
+
+## 🔧 Практики разработки
+
+### Работа с LocalStorage
+```typescript
+// Сохранение
+localStorage.setItem('lessons', JSON.stringify(lessons));
+
+// Загрузка с проверкой
+const stored = localStorage.getItem('lessons');
+if (stored) {
+  const parsed = JSON.parse(stored);
+  // Валидация типов!
+}
+```
+
+### Работа с Gemini API
+```typescript
+// Через geminiService.ts
+const response = await sendMessageToGemini(
+  message,
+  conversationHistory,
+  lessonContext
+);
+```
+
+### Локальная валидация (приоритет!)
+```typescript
+// Сначала проверяем локально
+const localCheck = validateAnswer(userAnswer, correctAnswer);
+if (localCheck.isCorrect) {
+  // Не тратим API запрос!
+  return { isCorrect: true, feedback: '✅ Верно!' };
+}
+// Только если неуверены - спрашиваем AI
+```
+
+### Логирование (для отладки)
+```typescript
+console.log('🔄 Загрузка уроков из localStorage...');
+console.log(`✅ Загружено ${lessons.length} уроков`);
+console.error('❌ Ошибка:', error);
+```
+
+## 🚨 Критические правила
+
+### НИКОГДА НЕ:
+1. ❌ Не удаляй существующие console.log (нужны для отладки)
+2. ❌ Не изменяй SYSTEM_PROMPT без согласования
+3. ❌ Не добавляй новые зависимости без необходимости
+4. ❌ Не меняй структуру типов из types.ts
+5. ❌ Не коммить .env файл в git
+6. ❌ Не используй innerHTML (XSS риск)
+7. ❌ Не блокируй UI длительными операциями
+
+### ВСЕГДА:
+1. ✅ Проверяй типы TypeScript перед сохранением
+2. ✅ Используй локальную валидацию когда возможно
+3. ✅ Тестируй с console.log перед удалением
+4. ✅ Обновляй документацию при значимых изменениях
+5. ✅ Проверяй localStorage после изменений
+6. ✅ Обрабатывай ошибки try/catch
+7. ✅ Используй осмысленные имена переменных
+
+## 📋 Частые задачи
+
+### Добавить новый урок
+1. Создай объект типа `Lesson` (см. types.ts)
+2. Добавь в constants.ts → INITIAL_LESSONS
+3. Или через UI: "Добавить урок" → вставь JSON
+
+### Изменить поведение AI
+1. Открой constants.ts
+2. Найди SYSTEM_PROMPT
+3. Измени инструкции (осторожно!)
+4. Протестируй с разными ответами
+
+### Отладка проблем с сохранением
+1. Открой DevTools → Application → Local Storage
+2. Проверь ключи: `lessons`, `lessonsProgress`, `vocabularyData`
+3. Проверь console.log в App.tsx
+4. Проверь формат JSON (валидность)
+
+### Настроить Gemini API
+1. Открой services/geminiService.ts
+2. Измени параметры генерации
+3. НЕ меняй API_KEY процесс
+
+## 🧪 Тестирование
+
+### Перед коммитом проверь:
+1. [ ] `npm run dev` запускается без ошибок
+2. [ ] TypeScript компилируется (`npm run build`)
+3. [ ] Все 10 тестов из TESTING_GUIDE.md проходят
+4. [ ] LocalStorage сохраняет данные
+5. [ ] AI отвечает корректно
+6. [ ] Нет ошибок в консоли браузера
+
+### Критические сценарии:
+- Добавление/удаление урока
+- Прохождение урока с сохранением прогресса
+- Локальная валидация ответов
+- AI-проверка через Gemini
+- Экспорт/импорт данных
+
+## 🔐 Безопасность
+
+### API ключ
+- ✅ Только в .env файле
+- ✅ .env в .gitignore
+- ✅ Доступ через process.env.VITE_GEMINI_API_KEY
+- ❌ Никогда не хардкодь в коде
+
+### LocalStorage
+- Нет чувствительных данных пользователей
+- Только прогресс обучения и статистика
+- Валидация типов при загрузке
+
+## 📚 Полезные команды
+
+```bash
+# Разработка
+npm run dev          # Запуск dev-сервера (http://localhost:5173)
+npm run build        # Сборка для продакшна
+npm run preview      # Предпросмотр сборки
+
+# Отладка
+# Очистка localStorage в консоли браузера:
+localStorage.clear()
+
+# Просмотр уроков в localStorage:
+JSON.parse(localStorage.getItem('lessons'))
+
+# Проверка прогресса:
+JSON.parse(localStorage.getItem('lessonsProgress'))
+```
+
+## 📖 Документация
+
+### Для быстрого старта:
+- `QUICKSTART.md` - запуск за 5 минут
+- `TESTING_GUIDE.md` - 10 тестовых сценариев
+
+### Для разработки:
+- `DEV_GUIDE.md` - полное руководство разработчика
+- `FILES_STRUCTURE.md` - структура файлов
+- `ARCHITECTURE.md` - архитектура приложения
+
+### Для понимания AI:
+- `PEDAGOGICAL_GUIDE.md` - педагогические принципы
+- `SPACED_REPETITION_GUIDE.md` - алгоритм повторений
+
+### Отчёты:
+- `SUMMARY.md` - резюме проекта
+- `CHANGELOG.md` - история изменений
+- `PROJECT_OVERVIEW.md` - обзор проекта
+
+## 🎯 Приоритеты при разработке
+
+### 1. Качество кода
+- Типобезопасность (TypeScript)
+- Читаемость и поддерживаемость
+- Консистентность стиля
+
+### 2. Производительность
+- Минимум API запросов (локальная валидация)
+- useMemo для тяжёлых вычислений
+- Ленивая загрузка данных
+
+### 3. UX
+- Мгновенная обратная связь
+- Визуальные индикаторы (loading, saving)
+- Понятные сообщения об ошибках
+
+### 4. Экономия
+- Локальная проверка вместо AI (70% экономии)
+- Ограничение истории чата (3 сообщения)
+- Кеширование уроков в localStorage
+
+## 💡 Частые ошибки и решения
+
+### Проблема: AI не отвечает
+**Решение**: Проверь .env → API ключ, проверь сеть, проверь лимиты Gemini
+
+### Проблема: Уроки не сохраняются
+**Решение**: Проверь console.log, проверь localStorage в DevTools, проверь JSON валидность
+
+### Проблема: TypeScript ошибки
+**Решение**: Импортируй типы из types.ts, проверь null/undefined, используй явные типы
+
+### Проблема: Медленная работа
+**Решение**: Используй useMemo, проверь количество API запросов, включи локальную валидацию
+
+## 🚀 Roadmap (см. DEVELOPMENT_ROADMAP.md)
+
+### В разработке:
+- [ ] Темная тема
+- [ ] Экспорт статистики в CSV
+- [ ] Аудио произношение (Web Speech API)
+
+### Планируется:
+- [ ] PWA (Progressive Web App)
+- [ ] Backend с синхронизацией
+- [ ] Голосовой ввод
+
+## 🔗 Полезные ссылки
+
+- [Google AI Studio](https://aistudio.google.com/) - API ключ
+- [Gemini API Docs](https://ai.google.dev/gemini-api/docs) - документация
+- [React Docs](https://react.dev/) - React документация
+- [Tailwind CSS](https://tailwindcss.com/) - Tailwind документация
+- [TypeScript Docs](https://www.typescriptlang.org/docs/) - TypeScript документация
+
+---
+
+## 📊 Метрики проекта
+
+| Метрика | Значение |
+|---------|----------|
+| Строк кода | ~2000 |
+| Компонентов | 8 |
+| Сервисов | 6 |
+| Документации | 9+ файлов |
+| Тестов | 10 сценариев |
+
+---
+
+**Версия**: 1.0.0
+**Последнее обновление**: 14 января 2025
+**Статус**: ✅ Production Ready
+
+---
+
+При изменении этого файла обновляй версию и дату!

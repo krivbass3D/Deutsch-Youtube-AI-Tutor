@@ -10,6 +10,9 @@ import StatisticsDashboard from './components/StatisticsDashboard';
 import GlobalDashboard from './components/GlobalDashboard';
 import LessonCard from './components/LessonCard';
 import { sortBySpacedRepetition } from './services/spacedRepetition';
+import { AIProviderStatus } from './components/AIProviderStatus';
+import { ToastContainer, showToast } from './components/Toast';
+import { setToastFunction } from './services/aiService';
 
 type ViewMode = 'dashboard' | 'lesson-overview' | 'vocabulary' | 'practice' | 'exam' | 'add-lesson' | 'summary';
 
@@ -44,6 +47,12 @@ const App: React.FC = () => {
   const [expandedVocabulary, setExpandedVocabulary] = useState(false);
   const [showStatistics, setShowStatistics] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  // Инициализация Toast функции для aiService
+  useEffect(() => {
+    setToastFunction(showToast);
+    console.log('✅ Toast функция подключена к aiService');
+  }, []);
 
   // Enhanced save with visual feedback
   useEffect(() => {
@@ -808,6 +817,12 @@ const App: React.FC = () => {
         .backface-hidden { backface-visibility: hidden; }
         .rotate-y-180 { transform: rotateY(180deg); }
       `}</style>
+      
+      {/* Toast Container for notifications */}
+      <ToastContainer />
+      
+      {/* AI Provider Status Indicator */}
+      <AIProviderStatus />
     </div>
   );
 };

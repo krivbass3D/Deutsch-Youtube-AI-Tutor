@@ -1,9 +1,16 @@
-
 import { GoogleGenAI } from "@google/genai";
 import { SYSTEM_PROMPT } from "../constants";
 import { Lesson } from "../types";
 
-const ai = new GoogleGenAI({ apiKey: process.env.API_KEY || "" });
+// ИСПРАВЛЕНО: используем правильное имя переменной окружения для Vite
+const apiKey = import.meta.env.VITE_GEMINI_API_KEY || "";
+
+if (!apiKey) {
+  console.error("❌ GEMINI_API_KEY отсутствует в .env файле!");
+  console.log("📝 Добавьте в .env: VITE_GEMINI_API_KEY=your_key_here");
+}
+
+const ai = new GoogleGenAI({ apiKey });
 
 export const getTutorResponse = async (
   lesson: Lesson,
@@ -12,6 +19,10 @@ export const getTutorResponse = async (
   userAnswer: string,
   history: { role: 'user' | 'model', parts: { text: string }[] }[]
 ) => {
+  if (!apiKey) {
+    throw new Error("API key is missing. Please add VITE_GEMINI_API_KEY to your .env file");
+  }
+
   const currentExercise = lesson.exercises[currentExerciseIndex];
   const currentTask = currentExercise.tasks[currentTaskIndex];
   const correctAnswer = lesson.answers.find(a => a.exercise === (currentExerciseIndex + 1))?.solutions[currentTaskIndex];
@@ -48,6 +59,10 @@ export const getGeneralResponse = async (
   userQuestion: string,
   history: { role: 'user' | 'model', parts: { text: string }[] }[]
 ) => {
+  if (!apiKey) {
+    throw new Error("API key is missing. Please add VITE_GEMINI_API_KEY to your .env file");
+  }
+
   const contextMessage = {
     lesson_id: lesson.lesson_id,
     title: lesson.title,

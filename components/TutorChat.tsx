@@ -1,6 +1,6 @@
 
 import React, { useState, useRef, useEffect } from 'react';
-import { getTutorResponse } from '../services/geminiService';
+import { getTutorResponse } from '../services/aiService';
 import { validateAnswer } from '../services/validationService';
 import { trackAPIRequest, trackLocalValidation } from '../services/tokenTracker';
 import { Lesson, ChatMessage } from '../types';

@@ -1,0 +1,36 @@
+{
+  "project": {
+    "name": "Deutsch YouTube AI Tutor",
+    "description": "AI-powered German learning app with YouTube integration and spaced repetition",
+    "type": "react-typescript-vite"
+  },
+  "preferences": {
+    "codeStyle": {
+      "typescript": true,
+      "functionalComponents": true,
+      "hooks": true,
+      "cssFramework": "tailwind"
+    },
+    "formatting": {
+      "semicolons": true,
+      "quotes": "single",
+      "trailingComma": "es5",
+      "tabWidth": 2
+    }
+  },
+  "context": {
+    "mainFiles": [
+      "App.tsx",
+      "types.ts",
+      "constants.ts",
+      "components/",
+      "services/"
+    ],
+    "documentation": [
+      "README.md",
+      "ARCHITECTURE.md",
+      "DEV_GUIDE.md",
+      "PEDAGOGICAL_GUIDE.md"
+    ]
+  }
+}
