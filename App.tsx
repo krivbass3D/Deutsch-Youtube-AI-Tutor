@@ -4,15 +4,13 @@ import { Lesson, LessonProgress, Vocabulary, Exercise, Answer } from './types';
 import { INITIAL_LESSONS } from './constants';
 import VocabularyCard from './components/VocabularyCard';
 import TutorChat from './components/TutorChat';
-import TokenIndicator from './components/TokenIndicator';
 import ExamMode from './components/ExamMode';
 import StatisticsDashboard from './components/StatisticsDashboard';
 import GlobalDashboard from './components/GlobalDashboard';
 import LessonCard from './components/LessonCard';
 import { sortBySpacedRepetition } from './services/spacedRepetition';
-import { AIProviderStatus } from './components/AIProviderStatus';
+import { AIProviderSelectorCompact } from './components/AIProviderSelectorCompact';
 import { ToastContainer, showToast } from './components/Toast';
-import { setToastFunction } from './services/aiService';
 
 type ViewMode = 'dashboard' | 'lesson-overview' | 'vocabulary' | 'practice' | 'exam' | 'add-lesson' | 'summary';
 
@@ -47,12 +45,6 @@ const App: React.FC = () => {
   const [expandedVocabulary, setExpandedVocabulary] = useState(false);
   const [showStatistics, setShowStatistics] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
-
-  // Инициализация Toast функции для aiService
-  useEffect(() => {
-    setToastFunction(showToast);
-    console.log('✅ Toast функция подключена к aiService');
-  }, []);
 
   // Enhanced save with visual feedback
   useEffect(() => {
@@ -471,10 +463,10 @@ const App: React.FC = () => {
             <h1 className="text-xl font-bold text-slate-800">DeutschMeister</h1>
           </div>
           <div className="flex items-center space-x-4">
-             {/* API Request Limit Indicator */}
+             {/* AI Provider Selector */}
              <div className="flex items-center space-x-2">
-               <span className="text-xs text-slate-600 font-medium">Запросы AI:</span>
-               <TokenIndicator />
+               <span className="text-xs text-slate-600 font-medium">AI:</span>
+               <AIProviderSelectorCompact />
              </div>
              
              {/* Save status indicator */}
@@ -820,9 +812,6 @@ const App: React.FC = () => {
       
       {/* Toast Container for notifications */}
       <ToastContainer />
-      
-      {/* AI Provider Status Indicator */}
-      <AIProviderStatus />
     </div>
   );
 };
