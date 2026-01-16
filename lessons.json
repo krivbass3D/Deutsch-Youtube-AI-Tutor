@@ -1,11 +1,51 @@
 [
-  {
-    "lesson_id": "1",
-    "title": "Знакомство (Kennenlernen)",
+    {
+    "lesson_id": "5",
+    "title": "Модальные глаголы.",
     "vocabulary": [
       {
-        "word": "heißen",
-        "translation": "называться",
+        "word": "arbeiten",
+        "translation": "работать",
+        "type": "verb"
+      },
+      {
+        "word": "reinkommen",
+        "translation": "заходить",
+        "type": "verb"
+      },
+      {
+        "word": "abnehmen",
+        "translation": "худеть",
+        "type": "verb"
+      },
+      {
+        "word": "aufstehen",
+        "translation": "вставать",
+        "type": "verb"
+      },
+      {
+        "word": "parken",
+        "translation": "парковать",
+        "type": "verb"
+      },
+      {
+        "word": "lernen",
+        "translation": "учить",
+        "type": "verb"
+      },
+      {
+        "word": "studieren",
+        "translation": "учиться",
+        "type": "verb"
+      },
+      {
+        "word": "spielen",
+        "translation": "играть",
+        "type": "verb"
+      },
+      {
+        "word": "kommen",
+        "translation": "приходить, приезжать",
         "type": "verb"
       },
       {
@@ -14,80 +54,942 @@
         "type": "verb"
       },
       {
-        "word": "der Name",
-        "translation": "имя",
+        "word": "tanzen",
+        "translation": "танцевать",
+        "type": "verb"
+      },
+      {
+        "word": "hören",
+        "translation": "слушать",
+        "type": "verb"
+      },
+      {
+        "word": "trinken",
+        "translation": "пить",
+        "type": "verb"
+      },
+      {
+        "word": "spazieren gehen",
+        "translation": "ходить гулять",
+        "type": "verb"
+      },
+      {
+        "word": "bleiben",
+        "translation": "оставаться",
+        "type": "verb"
+      },
+      {
+        "word": "kaufen",
+        "translation": "покупать",
+        "type": "verb"
+      },
+      {
+        "word": "frühstücken",
+        "translation": "завтракать",
+        "type": "verb"
+      },
+      {
+        "word": "helfen",
+        "translation": "помогать",
+        "type": "verb"
+      },
+      {
+        "word": "waschen",
+        "translation": "мыть, стирать",
+        "type": "verb"
+      },
+      {
+        "word": "gehen",
+        "translation": "идти",
+        "type": "verb"
+      },
+      {
+        "word": "früh",
+        "translation": "рано",
+        "type": "adjective/adverb"
+      },
+      {
+        "word": "hier",
+        "translation": "тут",
+        "type": "adverb"
+      },
+      {
+        "word": "laut",
+        "translation": "громко",
+        "type": "adjective/adverb"
+      },
+      {
+        "word": "viel",
+        "translation": "много",
+        "type": "adjective/adverb"
+      },
+      {
+        "word": "mehr",
+        "translation": "больше",
+        "type": "adverb"
+      },
+      {
+        "word": "pünktlich",
+        "translation": "вовремя",
+        "type": "adjective/adverb"
+      },
+      {
+        "word": "spät",
+        "translation": "поздно",
+        "type": "adjective/adverb"
+      },
+      {
+        "word": "gut",
+        "translation": "хорошо",
+        "type": "adjective/adverb"
+      },
+      {
+        "word": "das Auto",
+        "translation": "машина",
         "type": "noun"
       },
       {
-        "word": "aus",
-        "translation": "из",
-        "type": "phrase"
+        "word": "die Suppe",
+        "translation": "суп",
+        "type": "noun"
       },
       {
-        "word": "schön",
-        "translation": "прекрасно/красиво",
-        "type": "adjective"
+        "word": "die Wörter",
+        "translation": "слова",
+        "type": "noun"
+      },
+      {
+        "word": "das Mädchen",
+        "translation": "девочка",
+        "type": "noun"
+      },
+      {
+        "word": "der Junge",
+        "translation": "мальчик",
+        "type": "noun"
+      },
+      {
+        "word": "die Kinder",
+        "translation": "дети",
+        "type": "noun"
+      },
+      {
+        "word": "die Schwester",
+        "translation": "сестра",
+        "type": "noun"
+      },
+      {
+        "word": "die Eltern",
+        "translation": "родители",
+        "type": "noun"
+      },
+      {
+        "word": "die Hausaufgabe",
+        "translation": "домашняя работа",
+        "type": "noun"
+      },
+      {
+        "word": "die Katze",
+        "translation": "кошка",
+        "type": "noun"
+      },
+      {
+        "word": "die Puppe",
+        "translation": "кукла",
+        "type": "noun"
+      },
+      {
+        "word": "das Wasser",
+        "translation": "вода",
+        "type": "noun"
+      },
+      {
+        "word": "das Kleid",
+        "translation": "платье",
+        "type": "noun"
       }
     ],
     "exercises": [
       {
-        "title": "Упражнение 1. Простые предложения",
+        "title": "Упражнение 2. Переведите и доведите до автоматизма",
         "tasks": [
-          "Меня зовут Макс.",
-          "Я живу в Берлине.",
-          "Это мое имя.",
-          "Я из Германии."
+          "Я должен работать.",
+          "Вы (формально) можете заходить.",
+          "Ей следует похудеть.",
+          "Мы должны рано вставать.",
+          "Вы (ihr) можете припарковать машину тут.",
+          "Я хотел бы суп.",
+          "Она хочет спать.",
+          "Девочке следует учить слова.",
+          "Вам (неформально) можно говорить громко.",
+          "Тебе нельзя кушать много.",
+          "Ему следует больше спать.",
+          "Ты должен учиться.",
+          "Мальчик хочет играть.",
+          "Дети не умеют читать.",
+          "Мы хотим жить в Австрии.",
+          "Вы (формально) должны прийти вовремя.",
+          "Она может хорошо танцевать.",
+          "Тебе можно слушать музыку.",
+          "Сестра не умеет читать.",
+          "Родителям можно пить пиво.",
+          "Вам (ihr) следует сделать домашнюю работу.",
+          "Ей нельзя поздно гулять.",
+          "Кошка должна остаться дома.",
+          "Девочка хочет куклу.",
+          "Тут Вы (формально) можете купить воду.",
+          "Я хочу завтракать.",
+          "Друзья могут приехать.",
+          "Ты должна постирать платье.",
+          "Вам (формально) следует помочь.",
+          "Я должен идти."
         ]
       }
     ],
     "answers": [
       {
-        "exercise": 1,
+        "exercise": 2,
         "solutions": [
-          "Ich heiße Max.",
-          "Ich wohne in Berlin.",
-          "Das ist mein Name.",
-          "Ich komme aus Deutschland."
+          "Ich muss arbeiten.",
+          "Sie dürfen reinkommen.",
+          "Sie soll abnehmen.",
+          "Wir müssen früh aufstehen.",
+          "Ihr dürft hier das Auto parken.",
+          "Ich möchte die Suppe.",
+          "Sie will schlafen.",
+          "Das Mädchen soll die Wörter lernen.",
+          "Du darfst laut sprechen.",
+          "Du darfst nicht viel essen.",
+          "Er soll mehr schlafen.",
+          "Du musst lernen.",
+          "Der Junge will spielen.",
+          "Die Kinder können nicht lesen.",
+          "Wir wollen in Österreich wohnen.",
+          "Sie müssen pünktlich kommen.",
+          "Sie kann gut tanzen.",
+          "Du darfst Musik hören.",
+          "Die Schwester kann nicht lesen.",
+          "Die Eltern dürfen Bier trinken.",
+          "Ihr sollt die Hausaufgabe machen.",
+          "Sie darf nicht spät spazieren gehen.",
+          "Die Katze muss zu Hause bleiben.",
+          "Das Mädchen will die Puppe.",
+          "Hier dürfen Sie Wasser kaufen.",
+          "Ich will frühstücken.",
+          "Die Freunde dürfen kommen.",
+          "Du sollst das Kleid waschen.",
+          "Sie sollen helfen.",
+          "Ich muss gehen."
         ]
       }
     ]
   },
   {
-    "lesson_id": "2",
-    "title": "Модальные глаголы (Modalverben)",
+  "lesson_id": "7",
+  "title": "7. Определённый и неопределённый артикль",
+  "vocabulary": [
+    {
+      "word": "schön",
+      "translation": "красивый",
+      "type": "adjective"
+    },
+    {
+      "word": "hässlich",
+      "translation": "уродливый",
+      "type": "adjective"
+    },
+    {
+      "word": "groß",
+      "translation": "большой",
+      "type": "adjective"
+    },
+    {
+      "word": "klein",
+      "translation": "маленький",
+      "type": "adjective"
+    },
+    {
+      "word": "klug",
+      "translation": "умный",
+      "type": "adjective"
+    },
+    {
+      "word": "dumm",
+      "translation": "глупый",
+      "type": "adjective"
+    },
+    {
+      "word": "streng",
+      "translation": "строгий",
+      "type": "adjective"
+    },
+    {
+      "word": "gerecht",
+      "translation": "справедливый",
+      "type": "adjective"
+    },
+    {
+      "word": "jung",
+      "translation": "молодой",
+      "type": "adjective"
+    },
+    {
+      "word": "alt",
+      "translation": "старый",
+      "type": "adjective"
+    },
+    {
+      "word": "neu",
+      "translation": "новый",
+      "type": "adjective"
+    },
+    {
+      "word": "hell",
+      "translation": "яркий",
+      "type": "adjective"
+    },
+    {
+      "word": "dunkel",
+      "translation": "тёмный",
+      "type": "adjective"
+    },
+    {
+      "word": "der Baum",
+      "translation": "дерево",
+      "type": "noun"
+    },
+    {
+      "word": "der Himmel",
+      "translation": "небо",
+      "type": "noun"
+    },
+    {
+      "word": "die Blume",
+      "translation": "цветок",
+      "type": "noun"
+    },
+    {
+      "word": "die Sonne",
+      "translation": "солнце",
+      "type": "noun"
+    },
+    {
+      "word": "das Gebäude",
+      "translation": "здание",
+      "type": "noun"
+    },
+    {
+      "word": "die Großstadt",
+      "translation": "большой город",
+      "type": "noun"
+    },
+    {
+      "word": "aber",
+      "translation": "но",
+      "type": "conjunction"
+    },
+    {
+      "word": "und",
+      "translation": "и",
+      "type": "conjunction"
+    },
+    {
+      "word": "wie",
+      "translation": "как",
+      "type": "conjunction"
+    }
+  ],
+  "exercises": [
+    {
+      "title": "Упражнение 1. Перевод с русского на немецкий",
+      "tasks": [
+        "Этот кролик белый.",
+        "Это, конкретное дерево очень старое.",
+        "Учительница строгая, но справедливая.",
+        "Это какой-то цветок. Цветок красивый.",
+        "Это какое-то здание. Здание уродливое.",
+        "Этот человек умный.",
+        "Это какой-то ученик.",
+        "Солнце яркое.",
+        "Эта, конкретная девочка не глупая.",
+        "Берлин — один большой город."
+      ]
+    }
+  ],
+  "answers": [
+    {
+      "exercise": 1,
+      "solutions": [
+        "Dieser Hase ist weiß.",
+        "Der Baum ist sehr alt.",
+        "Die Lehrerin ist streng, aber gerecht.",
+        "Das ist eine Blume. Die Blume ist schön.",
+        "Das ist ein Gebäude. Das Gebäude ist hässlich.",
+        "Dieser Mensch ist klug.",
+        "Das ist ein Schüler.",
+        "Die Sonne ist hell.",
+        "Dieses Mädchen ist nicht dumm.",
+        "Berlin ist eine große Stadt."
+      ]
+    }
+  ]
+},
+  {
+  "lesson_id": "8",
+  "title": "8. Падежи: Dativ и Akkusativ",
+  "vocabulary": [
+    {
+      "word": "lecker",
+      "translation": "вкусный",
+      "type": "adjective"
+    },
+    {
+      "word": "bitter",
+      "translation": "горький",
+      "type": "adjective"
+    },
+    {
+      "word": "sauer",
+      "translation": "кислый",
+      "type": "adjective"
+    },
+    {
+      "word": "süß",
+      "translation": "сладкий",
+      "type": "adjective"
+    },
+    {
+      "word": "trocken",
+      "translation": "сухой",
+      "type": "adjective"
+    },
+    {
+      "word": "scharf",
+      "translation": "острый",
+      "type": "adjective"
+    },
+    {
+      "word": "salzig",
+      "translation": "солёный",
+      "type": "adjective"
+    },
+    {
+      "word": "frisch",
+      "translation": "свежий",
+      "type": "adjective"
+    },
+    {
+      "word": "kalt",
+      "translation": "холодный",
+      "type": "adjective"
+    },
+    {
+      "word": "warm",
+      "translation": "тёплый",
+      "type": "adjective"
+    },
+    {
+      "word": "heiß",
+      "translation": "горячий",
+      "type": "adjective"
+    },
+    {
+      "word": "schwer",
+      "translation": "тяжёлый",
+      "type": "adjective"
+    },
+    {
+      "word": "zu",
+      "translation": "слишком",
+      "type": "particle"
+    },
+    {
+      "word": "der Zucker",
+      "translation": "сахар",
+      "type": "noun"
+    },
+    {
+      "word": "das Salz",
+      "translation": "соль",
+      "type": "noun"
+    },
+    {
+      "word": "der Pfeffer",
+      "translation": "перец",
+      "type": "noun"
+    },
+    {
+      "word": "das Restaurant",
+      "translation": "ресторан",
+      "type": "noun"
+    },
+    {
+      "word": "das Kino",
+      "translation": "кинотеатр",
+      "type": "noun"
+    },
+    {
+      "word": "der Brief",
+      "translation": "письмо",
+      "type": "noun"
+    },
+    {
+      "word": "der Wald",
+      "translation": "лес",
+      "type": "noun"
+    },
+    {
+      "word": "in",
+      "translation": "через (со временем)",
+      "type": "preposition"
+    },
+    {
+      "word": "seit",
+      "translation": "с (действие началось в прошлом и длится до настоящего времени)",
+      "type": "preposition"
+    }
+  ],
+  "exercises": [
+    {
+      "title": "Упражнение 1. Предлоги с Dativ",
+      "tasks": [
+        "Чай с сахаром слишком сладкий.",
+        "Я пишу шариковой ручкой.",
+        "Мама едет в Мюнхен.",
+        "Брат придёт через час.",
+        "Мы вышли из ресторана.",
+        "Анна едет на вокзал.",
+        "Это письмо от папы.",
+        "Книга у подруги.",
+        "Я работаю с сентября."
+      ]
+    },
+    {
+      "title": "Упражнение 2. Предлоги с Akkusativ",
+      "tasks": [
+        "Я иду по улице.",
+        "Это цветок для Сабрины.",
+        "Кофе без сахара горький.",
+        "Все сидят вокруг стола."
+      ]
+    },
+    {
+      "title": "Упражнение 3. Dativ с артиклями/существительными",
+      "tasks": [
+        "Я приду после занятия.",
+        "Мы читаем «Гарри Поттера» Джоан Роулинг.",
+        "Он у врача.",
+        "Мария идёт на почту.",
+        "Я дарю маме шоколад.",
+        "Яблоко с дерева."
+      ]
+    },
+    {
+      "title": "Упражнение 4. Akkusativ с артиклями/существительными",
+      "tasks": [
+        "Вечером я иду в театр.",
+        "Николь встречается с Марком в 11 часов.",
+        "Я пью кофе без молока и сахара.",
+        "Мы учимся до мая.",
+        "Все сидят вокруг стола.",
+        "Люди идут через лес.",
+        "Для подруги работа не сложная.",
+        "Девочка покупает еду для кошки.",
+        "Я ем всё без соли.",
+        "Папа покупает хлеб."
+      ]
+    }
+  ],
+  "answers": [
+    {
+      "exercise": 1,
+      "solutions": [
+        "Der Tee mit Zucker ist zu süß.",
+        "Ich schreibe mit einem Kugelschreiber.",
+        "Mama fährt nach München.",
+        "Der Bruder kommt in einer Stunde.",
+        "Wir sind aus dem Restaurant gegangen.",
+        "Anna fährt zum Bahnhof.",
+        "Das ist ein Brief von Papa.",
+        "Das Buch ist bei der Freundin.",
+        "Ich arbeite seit September."
+      ]
+    },
+    {
+      "exercise": 2,
+      "solutions": [
+        "Ich gehe die Straße entlang.",
+        "Das ist eine Blume für Sabrina.",
+        "Der Kaffee ohne Zucker ist bitter.",
+        "Alle sitzen um den Tisch."
+      ]
+    },
+    {
+      "exercise": 3,
+      "solutions": [
+        "Ich komme nach dem Unterricht.",
+        "Wir lesen „Harry Potter“ von Joanne Rowling.",
+        "Er ist beim Arzt.",
+        "Maria geht zur Post.",
+        "Ich schenke meiner Mutter Schokolade.",
+        "Der Apfel fällt vom Baum."
+      ]
+    },
+    {
+      "exercise": 4,
+      "solutions": [
+        "Abends gehe ich ins Theater.",
+        "Nicole trifft sich mit Mark um 11 Uhr.",
+        "Ich trinke Kaffee ohne Milch und Zucker.",
+        "Wir lernen bis Mai.",
+        "Alle sitzen um den Tisch.",
+        "Die Leute gehen durch den Wald.",
+        "Für die Freundin ist die Arbeit nicht schwer.",
+        "Das Mädchen kauft Essen für die Katze.",
+        "Ich esse alles ohne Salz.",
+        "Papa kauft Brot."
+      ]
+    }
+  ]
+},
+    {
+    "lesson_id": "9",
+    "title": "9. Определение рода",
     "vocabulary": [
       {
-        "word": "können",
-        "translation": "мочь/уметь",
+        "word": "wachsen",
+        "translation": "расти",
         "type": "verb"
       },
       {
-        "word": "müssen",
-        "translation": "быть должным",
+        "word": "wandern",
+        "translation": "путешествовать, ходить в поход (в горы)",
         "type": "verb"
       },
       {
-        "word": "wollen",
-        "translation": "хотеть",
+        "word": "kriegen",
+        "translation": "получать",
         "type": "verb"
       },
       {
-        "word": "sprechen",
-        "translation": "говорить",
-        "type": "verb"
+        "word": "die Apotheke",
+        "translation": "аптека",
+        "type": "noun"
       },
       {
-        "word": "Deutsch",
-        "translation": "немецкий",
+        "word": "der Schulhof",
+        "translation": "школьный двор",
+        "type": "noun"
+      },
+      {
+        "word": "das Silvester",
+        "translation": "Новый год (канун Нового года)",
+        "type": "noun"
+      },
+      {
+        "word": "der Tomatensaft",
+        "translation": "томатный сок",
+        "type": "noun"
+      },
+      {
+        "word": "das Marmeladenbrot",
+        "translation": "хлеб с вареньем/джемом",
+        "type": "noun"
+      },
+      {
+        "word": "der Sekt",
+        "translation": "шампанское",
+        "type": "noun"
+      },
+      {
+        "word": "das Bier",
+        "translation": "пиво",
+        "type": "noun"
+      },
+      {
+        "word": "der Wodka",
+        "translation": "водка",
+        "type": "noun"
+      },
+      {
+        "word": "der Fisch",
+        "translation": "рыба",
+        "type": "noun"
+      },
+      {
+        "word": "die Milch",
+        "translation": "молоко",
+        "type": "noun"
+      },
+      {
+        "word": "der Tisch",
+        "translation": "стол",
+        "type": "noun"
+      },
+      {
+        "word": "das Rauchen",
+        "translation": "курение",
+        "type": "noun"
+      },
+      {
+        "word": "die Limonade",
+        "translation": "лимонад",
+        "type": "noun"
+      },
+      {
+        "word": "das Hähnchen",
+        "translation": "курочка",
+        "type": "noun"
+      },
+      {
+        "word": "die Zeitung",
+        "translation": "газета",
+        "type": "noun"
+      },
+      {
+        "word": "das Rot",
+        "translation": "красный свет (светофора)",
+        "type": "noun"
+      },
+      {
+        "word": "das Gelb",
+        "translation": "жёлтый свет (светофора)",
+        "type": "noun"
+      },
+      {
+        "word": "das Grün",
+        "translation": "зелёный свет (светофора)",
+        "type": "noun"
+      },
+      {
+        "word": "bei Grün",
+        "translation": "на зелёный свет",
+        "type": "phrase"
+      },
+      {
+        "word": "der Fluss",
+        "translation": "река",
+        "type": "noun"
+      },
+      {
+        "word": "der Himmel",
+        "translation": "небо",
+        "type": "noun"
+      },
+      {
+        "word": "die Wolke",
+        "translation": "облако",
+        "type": "noun"
+      },
+      {
+        "word": "das Silber",
+        "translation": "серебро",
+        "type": "noun"
+      },
+      {
+        "word": "das Gold",
+        "translation": "золото",
+        "type": "noun"
+      },
+      {
+        "word": "die Cola",
+        "translation": "кола",
+        "type": "noun"
+      },
+      {
+        "word": "die Dose",
+        "translation": "жестяная/консервная банка",
+        "type": "noun"
+      },
+      {
+        "word": "das Glas",
+        "translation": "бокал",
+        "type": "noun"
+      },
+      {
+        "word": "die Birke",
+        "translation": "берёза",
+        "type": "noun"
+      },
+      {
+        "word": "leicht",
+        "translation": "легкий",
+        "type": "adjective"
+      },
+      {
+        "word": "günstig",
+        "translation": "доступный по цене",
+        "type": "adjective"
+      }
+    ],
+    "exercises": [
+      {
+        "title": "Упражнение 1. Переведите с русского на немецкий",
+        "tasks": [
+          "По утрам я пью томатный сок и ем хлеб с вареньем (мармеладом).",
+          "Я вижу около холодильника бутылку шампанского, пиво, чай, кофе и газету.",
+          "Я перехожу улицу на зелёный свет.",
+          "Собака плывет через реку.",
+          "Девочка покупает рыбу, молоко, лимонад и курочку.",
+          "Сегодня я иду в кино.",
+          "Курение плохо для здоровья.",
+          "Небо яркое (светлое), облако серое, дуб зелёный.",
+          "Водка горькая, шампанское кислое, пиво холодное.",
+          "Золото дорогое. Серебро доступное (по цене)."
+        ]
+      },
+      {
+        "title": "Упражнение 3. Определите нужный род и вставьте определенный артикль",
+        "tasks": [
+          "Männlein",
+          "Schnee",
+          "Universität",
+          "Einsamkeit",
+          "Kranich",
+          "Akustik",
+          "Instrument",
+          "Dirigent",
+          "Komponist",
+          "Violinistin",
+          "Publikum",
+          "Uraufführung",
+          "Proben",
+          "Rhythmus",
+          "Patient",
+          "Krankheit",
+          "Krankenversicherung",
+          "Medikament",
+          "Klinik",
+          "Röntgen",
+          "Ärztin",
+          "Injektion",
+          "Immunität",
+          "Chirurgie",
+          "Wissen",
+          "Schülerin",
+          "Lehrer",
+          "Mathematik",
+          "Prüfung",
+          "Experiment",
+          "Freundschaft",
+          "Abreisedatum",
+          "König",
+          "Produktmarketing",
+          "Augenblick"
+        ]
+      }
+    ],
+    "answers": []
+  },
+  {
+    "lesson_id": "10",
+    "title": "10. Множественное число существительных.",
+    "vocabulary": [
+      {
+        "word": "die/das App",
+        "translation": "приложение",
+        "type": "noun"
+      },
+      {
+        "word": "der Staat",
+        "translation": "государство",
+        "type": "noun"
+      },
+      {
+        "word": "die Lebensmittel",
+        "translation": "продукты питания",
+        "type": "noun"
+      },
+      {
+        "word": "die Immobilien",
+        "translation": "недвижимость",
+        "type": "noun"
+      },
+      {
+        "word": "der Pass",
+        "translation": "паспорт",
+        "type": "noun"
+      },
+      {
+        "word": "der Sessel",
+        "translation": "кресло",
+        "type": "noun"
+      },
+      {
+        "word": "das Sofa",
+        "translation": "диван",
+        "type": "noun"
+      },
+      {
+        "word": "der Brief",
+        "translation": "письмо",
+        "type": "noun"
+      },
+      {
+        "word": "der Lohn",
+        "translation": "зарплата",
         "type": "noun"
       }
     ],
     "exercises": [
       {
-        "title": "Упражнение 1. Возможности и желания",
+        "title": "Упражнение 1. Образуйте множественное число",
         "tasks": [
-          "Я могу говорить по-немецки.",
-          "Он хочет учиться."
+          "der Tag",
+          "der Platz",
+          "die Hand",
+          "die Frage",
+          "das Land",
+          "das Heft",
+          "die Familie",
+          "der Gast",
+          "die Rose",
+          "die Frau",
+          "der Schrank",
+          "die Antwort",
+          "der Stuhl",
+          "der Monat",
+          "der Fisch",
+          "die Wand",
+          "der Bus",
+          "der Bruder",
+          "die Mutter",
+          "der Sohn",
+          "das Kind",
+          "der Freund",
+          "die Tasche",
+          "das Fenster",
+          "das Haus",
+          "die Lehrerin",
+          "der Arbeiter",
+          "der Arzt",
+          "der Vater",
+          "der Hund",
+          "die Tür",
+          "das Buch",
+          "die Freundin",
+          "die Nacht",
+          "das Bild",
+          "das Auge",
+          "die Tochter",
+          "das Hemd",
+          "der Garten",
+          "der Sessel"
+        ]
+      },
+      {
+        "title": "Упражнение 2. Переведите на немецкий",
+        "tasks": [
+          "Любовь живёт сегодня онлайн.",
+          "Я получаю зарплату.",
+          "Продукты в магазине дешевые.",
+          "США – государство.",
+          "Недвижимость дорогая.",
+          "Ученики умные.",
+          "Паспорта старые.",
+          "Кресла новые, но диваны старые.",
+          "Люди пишут письма.",
+          "Сыновья красивые и дочери умные."
         ]
       }
     ],
@@ -95,13 +997,66 @@
       {
         "exercise": 1,
         "solutions": [
-          "Ich kann Deutsch sprechen.",
-          "Er will lernen."
+          "die Tage",
+          "die Plätze",
+          "die Hände",
+          "die Fragen",
+          "die Länder",
+          "die Hefte",
+          "die Familien",
+          "die Gäste",
+          "die Rosen",
+          "die Frauen",
+          "die Schränke",
+          "die Antworten",
+          "die Stühle",
+          "die Monate",
+          "die Fische",
+          "die Wände",
+          "die Busse",
+          "die Brüder",
+          "die Mütter",
+          "die Söhne",
+          "die Kinder",
+          "die Freunde",
+          "die Taschen",
+          "die Fenster",
+          "die Häuser",
+          "die Lehrerinnen",
+          "die Arbeiter",
+          "die Ärzte",
+          "die Väter",
+          "die Hunde",
+          "die Türen",
+          "die Bücher",
+          "die Freundinnen",
+          "die Nächte",
+          "die Bilder",
+          "die Augen",
+          "die Töchter",
+          "die Hemden",
+          "die Gärten",
+          "die Sessel"
+        ]
+      },
+      {
+        "exercise": 2,
+        "solutions": [
+          "Liebe lebt heute online.",
+          "Ich bekomme Lohn.",
+          "Die Lebensmittel im Geschäft sind billig.",
+          "Die USA sind ein Staat.",
+          "Immobilien sind teuer.",
+          "Die Schüler sind klug.",
+          "Die Pässe sind alt.",
+          "Die Sessel sind neu, aber die Sofas sind alt.",
+          "Die Leute schreiben Briefe.",
+          "Die Söhne sind schön und die Töchter sind klug."
         ]
       }
     ]
   },
-    {
+  {
     "lesson_id": "11",
     "title": "11. Повествовательное предложение.",
     "vocabulary": [
