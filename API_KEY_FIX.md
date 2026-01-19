@@ -44,7 +44,7 @@ const ai = new GoogleGenAI({ apiKey });
 Откройте `.env` и убедитесь что есть:
 
 ```bash
-VITE_GEMINI_API_KEY=AIzaSyBadIjEHer6vvNOGbe3wHLSFYhORUtkntg
+VITE_GEMINI_API_KEY=your_GEMINI_key_here
 VITE_OPENAI_API_KEY=your_openai_key_here
 ```
 
