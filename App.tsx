@@ -513,12 +513,6 @@ const App: React.FC = () => {
             {/* Глобальный прогресс */}
             <GlobalDashboard 
               lessons={lessons}
-              lessonsProgress={Object.fromEntries(
-                lessons.map(l => [
-                  `lesson_${l.lesson_id}_progress`,
-                  getLessonProgressFromStorage(l.lesson_id)
-                ]).filter(([_, p]) => p !== null)
-              )}
               onSelectLesson={(lessonId) => {
                 const lesson = lessons.find(l => l.lesson_id === lessonId);
                 if (lesson) selectLesson(lesson);
@@ -653,8 +647,9 @@ const App: React.FC = () => {
 
         {currentView === 'exam' && selectedLesson && (
           <ExamMode 
-            vocabulary={selectedLesson.vocabulary || []} 
+            vocabulary={selectedLesson.vocabulary || []}
             lessonId={selectedLesson.lesson_id}
+            lesson={selectedLesson}
             onFinish={() => setCurrentView('lesson-overview')}
           />
         )}
@@ -734,7 +729,8 @@ const App: React.FC = () => {
 
             <div className="lg:col-span-2">
               <TutorChat 
-                lesson={selectedLesson} 
+                lesson={selectedLesson}
+                lessonId={selectedLesson.lesson_id}
                 currentExerciseIndex={progress.currentExerciseIdx} 
                 currentTaskIndex={progress.currentTaskIdx}
                 onFeedback={onFeedback}

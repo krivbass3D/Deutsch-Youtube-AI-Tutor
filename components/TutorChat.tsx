@@ -3,24 +3,49 @@ import React, { useState, useRef, useEffect } from 'react';
 import { getTutorResponse } from '../services/aiService';
 import { validateAnswer } from '../services/validationService';
 import { trackAPIRequest, trackLocalValidation } from '../services/tokenTracker';
+import { initializeLessonProgress, recordExerciseAttempt } from '../services/progressService';
 import { Lesson, ChatMessage } from '../types';
 
 interface TutorChatProps {
   lesson: Lesson;
+  lessonId: string;
   currentExerciseIndex: number;
   currentTaskIndex: number;
   onFeedback: (isCorrect: boolean, userAnswer: string) => void;
   resetChat?: number; // timestamp to clear chat
 }
 
-const TutorChat: React.FC<TutorChatProps> = ({ lesson, currentExerciseIndex, currentTaskIndex, onFeedback, resetChat }) => {
+const TutorChat: React.FC<TutorChatProps> = ({ lesson, lessonId, currentExerciseIndex, currentTaskIndex, onFeedback, resetChat }) => {
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [inputValue, setInputValue] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  const [firstAttemptTracker, setFirstAttemptTracker] = useState<Record<string, boolean>>({});
   const scrollRef = useRef<HTMLDivElement>(null);
+
+  // Инициализировать прогресс урока при загрузке компонента
+  useEffect(() => {
+    initializeLessonProgress(lesson);
+  }, [lesson, lessonId]);
+
+  // Отслеживать первую попытку при смене упражнения/задачи
+  useEffect(() => {
+    const exerciseKey = `${currentExerciseIndex}_${currentTaskIndex}`;
+    setFirstAttemptTracker(prev => {
+      if (!prev[exerciseKey]) {
+        return { ...prev, [exerciseKey]: true };
+      }
+      return prev;
+    });
+  }, [currentExerciseIndex, currentTaskIndex]);
 
   useEffect(() => {
     setMessages([]);
+    // Отмечаем, что это новая попытка (уже не первая)
+    const exerciseKey = `${currentExerciseIndex}_${currentTaskIndex}`;
+    setFirstAttemptTracker(prev => ({
+      ...prev,
+      [exerciseKey]: false
+    }));
   }, [resetChat, currentExerciseIndex, currentTaskIndex]);
 
   useEffect(() => {
@@ -66,6 +91,21 @@ const TutorChat: React.FC<TutorChatProps> = ({ lesson, currentExerciseIndex, cur
           setMessages(prev => [...prev, modelMsg]);
           onFeedback(validationResult.isCorrect, currentInput);
           trackLocalValidation(); // 📊 Запись локальной валидации
+
+          // 📈 Записываем результат в progressService
+          const exerciseTitle = lesson.exercises[currentExerciseIndex]?.title || `Exercise${currentExerciseIndex + 1}`;
+          const exerciseId = `exercise_${exerciseTitle}_task_${currentTaskIndex}`;
+          const exerciseKey = `${currentExerciseIndex}_${currentTaskIndex}`;
+          const wasFirstAttempt = firstAttemptTracker[exerciseKey] === true;
+          
+          recordExerciseAttempt(lessonId, exerciseId, validationResult.isCorrect, wasFirstAttempt);
+          
+          // Отмечаем, что первая попытка уже использована
+          setFirstAttemptTracker(prev => ({
+            ...prev,
+            [exerciseKey]: false
+          }));
+
           setIsLoading(false);
           return;
         }
@@ -99,11 +139,26 @@ const TutorChat: React.FC<TutorChatProps> = ({ lesson, currentExerciseIndex, cur
 
       setMessages(prev => [...prev, modelMsg]);
 
-      if (responseText.includes('✅')) {
+      const isCorrect = responseText.includes('✅');
+      if (isCorrect) {
         onFeedback(true, currentInput);
       } else if (responseText.includes('❌') || responseText.includes('🤔')) {
         onFeedback(false, currentInput);
       }
+
+      // 📈 Записываем результат в progressService (для API валидации)
+      const exerciseTitle = lesson.exercises[currentExerciseIndex]?.title || `Exercise${currentExerciseIndex + 1}`;
+      const exerciseId = `exercise_${exerciseTitle}_task_${currentTaskIndex}`;
+      const exerciseKey = `${currentExerciseIndex}_${currentTaskIndex}`;
+      const wasFirstAttempt = firstAttemptTracker[exerciseKey] === true;
+      
+      recordExerciseAttempt(lessonId, exerciseId, isCorrect, wasFirstAttempt);
+      
+      // Отмечаем, что первая попытка уже использована
+      setFirstAttemptTracker(prev => ({
+        ...prev,
+        [exerciseKey]: false
+      }));
 
     } catch (error: any) {
       console.error(error);

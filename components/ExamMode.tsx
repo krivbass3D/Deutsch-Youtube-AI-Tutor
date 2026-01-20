@@ -1,12 +1,14 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Vocabulary } from '../types';
+import { Vocabulary, Lesson } from '../types';
 import { validateAnswer } from '../services/validationService';
 import { sortBySpacedRepetition } from '../services/spacedRepetition';
 import { recordExamAnswer } from '../services/vocabularyStatistics';
+import { initializeLessonProgress, recordWordExamAttempt } from '../services/progressService';
 
 interface ExamModeProps {
   vocabulary: Vocabulary[];
   lessonId: string;
+  lesson: Lesson; // Добавляем полный объект урока для инициализации
   onFinish: () => void;
 }
 
@@ -19,13 +21,18 @@ interface ExamResult {
 
 type ExamPhase = 'exam' | 'results';
 
-const ExamMode: React.FC<ExamModeProps> = ({ vocabulary, lessonId, onFinish }) => {
+const ExamMode: React.FC<ExamModeProps> = ({ vocabulary, lessonId, lesson, onFinish }) => {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [userAnswer, setUserAnswer] = useState('');
   const [phase, setPhase] = useState<ExamPhase>('exam');
   const [results, setResults] = useState<ExamResult[]>([]);
   const [answered, setAnswered] = useState(false);
   const [feedback, setFeedback] = useState<{ message: string; isCorrect: boolean } | null>(null);
+
+  // Инициализировать прогресс урока при загрузке экзамена
+  useEffect(() => {
+    initializeLessonProgress(lesson);
+  }, [lesson, lessonId]);
 
   const sortedVocab = sortBySpacedRepetition(vocabulary, lessonId);
   const current = sortedVocab[currentIndex];
@@ -34,8 +41,17 @@ const ExamMode: React.FC<ExamModeProps> = ({ vocabulary, lessonId, onFinish }) =
     const validation = validateAnswer(userAnswer, current.translation);
     const isCorrect = validation !== null && !validation.shouldCallAPI;
 
-    // Записываем результат экзамена в статистику
+    // Найти индекс слова в оригинальном массиве для создания правильного ID
+    const originalVocabIndex = vocabulary.findIndex(
+      v => v.word === current.word && v.translation === current.translation
+    );
+    const wordId = `word_${originalVocabIndex}`;
+
+    // Записываем результат экзамена в статистику (старая система)
     recordExamAnswer(lessonId, current.word, isCorrect);
+    
+    // Записываем результат в новую систему прогресса
+    recordWordExamAttempt(lessonId, wordId, isCorrect);
 
     const newResult: ExamResult = {
       word: current.word,

@@ -1,37 +1,168 @@
 /**
  * Компонент Dashboard с глобальной статистикой прогресса
  * Показывает прогресс по всем урокам и методические рекомендации
+ * Использует новую систему progressService
  */
 
 import React, { useMemo } from 'react';
-import { Lesson, LessonProgress } from '../types';
-import { getGlobalProgress, getPedagogicalRecommendations, getLessonMetrics } from '../services/progressTracker';
+import { Lesson, LessonData } from '../types';
+import { getDashboardStats, getLessonMetrics, getLessonData, getProgress } from '../services/progressService';
 
 interface GlobalDashboardProps {
   lessons: Lesson[];
-  lessonsProgress: Record<string, LessonProgress>;
   onSelectLesson?: (lessonId: string) => void;
 }
 
-const GlobalDashboard: React.FC<GlobalDashboardProps> = ({ lessons, lessonsProgress, onSelectLesson }) => {
-  const globalProgress = useMemo(() => {
-    return getGlobalProgress(lessons, lessonsProgress);
-  }, [lessons, lessonsProgress]);
+const GlobalDashboard: React.FC<GlobalDashboardProps> = ({ lessons, onSelectLesson }) => {
+  // Получить статистику dashboard из новой системы
+  const dashboardStats = useMemo(() => {
+    return getDashboardStats();
+  }, []);
 
-  const allMetrics = useMemo(() => {
-    return lessons.map(lesson => {
-      const progress = lessonsProgress[`lesson_${lesson.lesson_id}_progress`] || null;
-      return getLessonMetrics(lesson, progress);
+  // Получить данные по всем урокам
+  const allProgress = useMemo(() => {
+    const progress = getProgress();
+    return progress.lessons;
+  }, []);
+
+  // Вычислить общую точность упражнений
+  const overallAccuracy = useMemo(() => {
+    const allLessons = Object.values(allProgress);
+    if (allLessons.length === 0) return 0;
+    
+    const totalExercises = allLessons.reduce((sum, lesson) => sum + lesson.metrics.totalExercises, 0);
+    const learnedExercises = allLessons.reduce((sum, lesson) => sum + lesson.metrics.exercisesLearned, 0);
+    
+    if (totalExercises === 0) return 0;
+    return Math.round((learnedExercises / totalExercises) * 100);
+  }, [allProgress]);
+
+  // Найти самые сложные и самые лёгкие уроки
+  const lessonStats = useMemo(() => {
+    const stats: Array<{
+      lessonId: string;
+      title: string;
+      accuracy: number;
+      wordsLearned: number;
+      totalWords: number;
+      exercisesLearned: number;
+      totalExercises: number;
+      status: string;
+    }> = [];
+
+    lessons.forEach(lesson => {
+      const lessonData = allProgress[lesson.lesson_id];
+      if (lessonData) {
+        stats.push({
+          lessonId: lesson.lesson_id,
+          title: lesson.title,
+          accuracy: lessonData.metrics.exerciseAccuracy,
+          wordsLearned: lessonData.metrics.wordsLearned,
+          totalWords: lessonData.metrics.totalWords,
+          exercisesLearned: lessonData.metrics.exercisesLearned,
+          totalExercises: lessonData.metrics.totalExercises,
+          status: lessonData.status,
+        });
+      }
     });
-  }, [lessons, lessonsProgress]);
 
+    return stats;
+  }, [lessons, allProgress]);
+
+  // Самые сложные уроки
+  const hardestLessons = useMemo(() => {
+    return [...lessonStats]
+      .filter(s => s.totalExercises > 0)
+      .sort((a, b) => a.accuracy - b.accuracy)
+      .slice(0, 1);
+  }, [lessonStats]);
+
+  // Самые лёгкие уроки / лучший прогресс
+  const easiestLessons = useMemo(() => {
+    return [...lessonStats]
+      .filter(s => s.totalExercises > 0)
+      .sort((a, b) => b.accuracy - a.accuracy)
+      .slice(0, 1);
+  }, [lessonStats]);
+
+  // Уроки, требующие повторения (не начиналась или давно не занимались)
+  const lessonsNeedingReview = useMemo(() => {
+    return lessonStats
+      .filter(s => s.status === 'in_progress' && s.accuracy < 80)
+      .sort((a, b) => a.accuracy - b.accuracy);
+  }, [lessonStats]);
+
+  // Рекомендуемый следующий урок
+  const recommendedNextLesson = useMemo(() => {
+    // Найти урок с наименьшим прогрессом или не начатый
+    const unstarted = lessonStats.find(s => s.status === 'not_started');
+    if (unstarted) return unstarted;
+
+    const inProgress = [...lessonStats]
+      .filter(s => s.status === 'in_progress')
+      .sort((a, b) => a.accuracy - b.accuracy)
+      .slice(0, 1)[0];
+    
+    return inProgress || null;
+  }, [lessonStats]);
+
+  // Методические рекомендации
   const recommendations = useMemo(() => {
-    return getPedagogicalRecommendations(globalProgress, allMetrics);
-  }, [globalProgress, allMetrics]);
+    const recs: Array<{
+      type: 'warning' | 'suggestion' | 'success';
+      icon: string;
+      title: string;
+      description: string;
+      actionLesson?: string;
+    }> = [];
+
+    // Если общая точность низкая
+    if (overallAccuracy < 60) {
+      recs.push({
+        type: 'warning',
+        icon: '⚠️',
+        title: 'Требуется дополнительная практика',
+        description: `Ваша средняя точность упражнений составляет ${overallAccuracy}%. Рекомендуем потратить больше времени на повторение сложных тем.`,
+      });
+    }
+
+    // Если есть задолженный урок
+    if (hardestLessons.length > 0 && hardestLessons[0].accuracy < 50) {
+      recs.push({
+        type: 'warning',
+        icon: '🔴',
+        title: 'Сложный урок требует внимания',
+        description: `"${hardestLessons[0].title}" требует доработки. Точность: ${hardestLessons[0].accuracy}%. Посвятите этому уроку время.`,
+        actionLesson: hardestLessons[0].lessonId,
+      });
+    }
+
+    // Положительное подкрепление
+    if (overallAccuracy >= 80) {
+      recs.push({
+        type: 'success',
+        icon: '✅',
+        title: 'Отличный прогресс!',
+        description: 'Ваш средняя точность выше 80%. Продолжайте в том же темпе!',
+      });
+    }
+
+    // Если мало слов выучено на этой неделе
+    if (dashboardStats.wordsLearnedThisWeek === 0) {
+      recs.push({
+        type: 'suggestion',
+        icon: '💡',
+        title: 'Начните с изучения новых слов',
+        description: 'На этой неделе вы ещё не выучили новых слов. Отличный момент, чтобы начать!',
+      });
+    }
+
+    return recs;
+  }, [overallAccuracy, dashboardStats.wordsLearnedThisWeek, hardestLessons]);
 
   return (
     <div className="space-y-8">
-      {/* Заголовок и основные метрики */}
+      {/* Заголовок и описание */}
       <div>
         <h2 className="text-3xl font-bold text-slate-800 mb-2">📊 Ваш прогресс обучения</h2>
         <p className="text-slate-600">Общая статистика по всем урокам</p>
@@ -43,13 +174,13 @@ const GlobalDashboard: React.FC<GlobalDashboardProps> = ({ lessons, lessonsProgr
         <div className="bg-gradient-to-br from-green-50 to-emerald-50 rounded-3xl p-6 border-2 border-green-200">
           <div className="flex items-start justify-between">
             <div>
-              <p className="text-4xl font-bold text-green-600">{globalProgress.wordsLearnedThisWeek}</p>
+              <p className="text-4xl font-bold text-green-600">{dashboardStats.wordsLearnedThisWeek}</p>
               <p className="text-sm text-slate-600 mt-1">слов выучено за неделю</p>
             </div>
             <span className="text-3xl">📈</span>
           </div>
           <div className="mt-4 pt-4 border-t border-green-200 text-xs text-slate-600">
-            💡 Отличный результат! Продолжайте в том же темпе.
+            {dashboardStats.wordsLearnedThisWeek > 0 ? '💡 Отличный результат! Продолжайте в том же темпе.' : '💡 Начните с изучения новых слов'}
           </div>
         </div>
 
@@ -57,7 +188,7 @@ const GlobalDashboard: React.FC<GlobalDashboardProps> = ({ lessons, lessonsProgr
         <div className="bg-gradient-to-br from-blue-50 to-cyan-50 rounded-3xl p-6 border-2 border-blue-200">
           <div className="flex items-start justify-between">
             <div>
-              <p className="text-4xl font-bold text-blue-600">{globalProgress.totalWordsLearned}</p>
+              <p className="text-4xl font-bold text-blue-600">{dashboardStats.totalWordsLearned}</p>
               <p className="text-sm text-slate-600 mt-1">всего слов выучено</p>
             </div>
             <span className="text-3xl">🎯</span>
@@ -71,13 +202,13 @@ const GlobalDashboard: React.FC<GlobalDashboardProps> = ({ lessons, lessonsProgr
         <div className="bg-gradient-to-br from-purple-50 to-pink-50 rounded-3xl p-6 border-2 border-purple-200">
           <div className="flex items-start justify-between">
             <div>
-              <p className="text-4xl font-bold text-purple-600">{globalProgress.overallAccuracy}%</p>
+              <p className="text-4xl font-bold text-purple-600">{overallAccuracy}%</p>
               <p className="text-sm text-slate-600 mt-1">точность упражнений</p>
             </div>
             <span className="text-3xl">✓</span>
           </div>
           <div className="mt-4 pt-4 border-t border-purple-200 text-xs text-slate-600">
-            {globalProgress.overallAccuracy >= 80 ? '✅ Отлично!' : globalProgress.overallAccuracy >= 60 ? '🟡 Хорошо' : '⚠️ Нужна работа'}
+            {overallAccuracy >= 80 ? '✅ Отлично!' : overallAccuracy >= 60 ? '🟡 Хорошо' : '⚠️ Нужна работа'}
           </div>
         </div>
 
@@ -85,13 +216,13 @@ const GlobalDashboard: React.FC<GlobalDashboardProps> = ({ lessons, lessonsProgr
         <div className="bg-gradient-to-br from-amber-50 to-orange-50 rounded-3xl p-6 border-2 border-amber-200">
           <div className="flex items-start justify-between">
             <div>
-              <p className="text-4xl font-bold text-amber-600">{globalProgress.lessonsInProgress}</p>
+              <p className="text-4xl font-bold text-amber-600">{dashboardStats.lessonsInProgress}</p>
               <p className="text-sm text-slate-600 mt-1">уроков в процессе</p>
             </div>
             <span className="text-3xl">📚</span>
           </div>
           <div className="mt-4 pt-4 border-t border-amber-200 text-xs text-slate-600">
-            {globalProgress.lessonsCompleted > 0 && `✅ ${globalProgress.lessonsCompleted} завершено`}
+            {dashboardStats.lessonsCompleted > 0 && `✅ ${dashboardStats.lessonsCompleted} завершено`}
           </div>
         </div>
       </div>
@@ -145,14 +276,15 @@ const GlobalDashboard: React.FC<GlobalDashboardProps> = ({ lessons, lessonsProgr
         <h3 className="font-bold text-slate-800 text-lg">📋 Статистика по урокам</h3>
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
           {/* Самый сложный урок */}
-          {globalProgress.hardestLesson && (
+          {hardestLessons.length > 0 && (
             <div className="bg-red-50 rounded-2xl p-4 border-2 border-red-200">
               <p className="font-bold text-red-700 mb-2">⚠️ Самый сложный урок</p>
-              <p className="font-semibold text-slate-800">{globalProgress.hardestLesson.title}</p>
+              <p className="font-semibold text-slate-800">{hardestLessons[0].title}</p>
               <div className="mt-3 space-y-1 text-sm text-slate-700">
-                <p>📊 Точность: <span className="font-bold">{globalProgress.hardestLesson.exerciseAccuracy}%</span></p>
-                <p>📚 Выучено: <span className="font-bold">{globalProgress.hardestLesson.learnedWords}/{globalProgress.hardestLesson.totalVocab}</span></p>
-                {globalProgress.hardestLesson.difficultyLevel === 'hard' && (
+                <p>📊 Точность: <span className="font-bold">{hardestLessons[0].accuracy}%</span></p>
+                <p>📚 Выучено: <span className="font-bold">{hardestLessons[0].wordsLearned}/{hardestLessons[0].totalWords}</span> слов</p>
+                <p>✓ Упражнений: <span className="font-bold">{hardestLessons[0].exercisesLearned}/{hardestLessons[0].totalExercises}</span></p>
+                {hardestLessons[0].accuracy < 60 && (
                   <p className="text-red-600 mt-2">💡 Рекомендуем вернуться к грамматике и медленнее учить новые слова.</p>
                 )}
               </div>
@@ -160,13 +292,14 @@ const GlobalDashboard: React.FC<GlobalDashboardProps> = ({ lessons, lessonsProgr
           )}
 
           {/* Самый лёгкий урок */}
-          {globalProgress.easiestLesson && (
+          {easiestLessons.length > 0 && (
             <div className="bg-green-50 rounded-2xl p-4 border-2 border-green-200">
               <p className="font-bold text-green-700 mb-2">✅ Лучший прогресс</p>
-              <p className="font-semibold text-slate-800">{globalProgress.easiestLesson.title}</p>
+              <p className="font-semibold text-slate-800">{easiestLessons[0].title}</p>
               <div className="mt-3 space-y-1 text-sm text-slate-700">
-                <p>📊 Точность: <span className="font-bold">{globalProgress.easiestLesson.exerciseAccuracy}%</span></p>
-                <p>📚 Выучено: <span className="font-bold">{globalProgress.easiestLesson.learnedWords}/{globalProgress.easiestLesson.totalVocab}</span></p>
+                <p>📊 Точность: <span className="font-bold">{easiestLessons[0].accuracy}%</span></p>
+                <p>📚 Выучено: <span className="font-bold">{easiestLessons[0].wordsLearned}/{easiestLessons[0].totalWords}</span> слов</p>
+                <p>✓ Упражнений: <span className="font-bold">{easiestLessons[0].exercisesLearned}/{easiestLessons[0].totalExercises}</span></p>
                 <p className="text-green-600 mt-2">🎉 Отличная работа! Вы хорошо понимаете эту тему.</p>
               </div>
             </div>
@@ -174,17 +307,15 @@ const GlobalDashboard: React.FC<GlobalDashboardProps> = ({ lessons, lessonsProgr
         </div>
 
         {/* Рекомендуемый следующий урок */}
-        {globalProgress.recommendedNextLesson && (
+        {recommendedNextLesson && (
           <div className="bg-blue-50 rounded-2xl p-4 border-2 border-blue-200">
             <p className="font-bold text-blue-700 mb-2">🎯 Рекомендуется начать/повторить</p>
-            <p className="font-semibold text-slate-800">{globalProgress.recommendedNextLesson.title}</p>
+            <p className="font-semibold text-slate-800">{recommendedNextLesson.title}</p>
             <div className="mt-3 space-y-1 text-sm text-slate-700">
-              <p>📊 Точность: <span className="font-bold">{globalProgress.recommendedNextLesson.exerciseAccuracy}%</span></p>
-              {globalProgress.recommendedNextLesson.daysSinceLastStudy !== null && (
-                <p>⏰ Не занимались: <span className="font-bold">{globalProgress.recommendedNextLesson.daysSinceLastStudy} дней</span></p>
-              )}
+              <p>📊 Точность: <span className="font-bold">{recommendedNextLesson.accuracy}%</span></p>
+              <p>📚 Статус: <span className="font-bold capitalize">{recommendedNextLesson.status}</span></p>
               <button
-                onClick={() => onSelectLesson?.(globalProgress.recommendedNextLesson!.lessonId)}
+                onClick={() => onSelectLesson?.(recommendedNextLesson.lessonId)}
                 className="mt-3 w-full py-2 bg-blue-600 text-white rounded-xl font-bold hover:bg-blue-700 transition-colors"
               >
                 Начать урок →
@@ -194,11 +325,11 @@ const GlobalDashboard: React.FC<GlobalDashboardProps> = ({ lessons, lessonsProgr
         )}
 
         {/* Уроки, требующие повторения */}
-        {globalProgress.lessonsNeedingReview.length > 0 && (
+        {lessonsNeedingReview.length > 0 && (
           <div className="bg-amber-50 rounded-2xl p-4 border-2 border-amber-200">
-            <p className="font-bold text-amber-700 mb-3">⏰ Требуют повторения ({globalProgress.lessonsNeedingReview.length})</p>
+            <p className="font-bold text-amber-700 mb-3">⏰ Требуют повторения ({lessonsNeedingReview.length})</p>
             <div className="space-y-2">
-              {globalProgress.lessonsNeedingReview.map(lesson => (
+              {lessonsNeedingReview.map(lesson => (
                 <button
                   key={lesson.lessonId}
                   onClick={() => onSelectLesson?.(lesson.lessonId)}
@@ -207,7 +338,7 @@ const GlobalDashboard: React.FC<GlobalDashboardProps> = ({ lessons, lessonsProgr
                   <div className="flex justify-between items-center">
                     <div>
                       <p className="font-semibold text-slate-800">{lesson.title}</p>
-                      <p className="text-xs text-slate-600">Не повторяли {lesson.daysSinceLastStudy} дней</p>
+                      <p className="text-xs text-slate-600">Точность: {lesson.accuracy}%</p>
                     </div>
                     <span className="text-lg">→</span>
                   </div>
