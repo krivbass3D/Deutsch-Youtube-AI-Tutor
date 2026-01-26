@@ -6,36 +6,37 @@
 import React, { useMemo } from 'react';
 import { Lesson, LessonProgress } from '../types';
 import { getLessonMetrics } from '../services/progressTracker';
+import { VocabStatsState } from '../services/vocabularyStatistics';
+import { SRState } from '../services/spacedRepetition';
 
 interface LessonCardProps {
   lesson: Lesson;
   progress: LessonProgress | null;
+  vocabStats: VocabStatsState;
+  srState: SRState;
+  difficultWords: Set<string>;
   onSelect: (lesson: Lesson) => void;
   onDelete: (e: React.MouseEvent, lessonId: string) => void;
 }
 
-const LessonCard: React.FC<LessonCardProps> = ({ lesson, progress, onSelect, onDelete }) => {
-  // Состояние для триггера обновления SR данных
-  const [srDataUpdateTrigger, setSrDataUpdateTrigger] = React.useState(0);
-
-  // Слушаем события обновления SR данных
-  React.useEffect(() => {
-    const handleSRDataChange = (event: CustomEvent) => {
-      const { lessonId } = event.detail;
-      // Если это событие для нашего урока, пересчитываем метрики
-      if (lessonId === lesson.lesson_id) {
-        console.log(`🔔 SR данные обновились для урока #${lessonId}, пересчитываем метрики...`);
-        setSrDataUpdateTrigger(prev => prev + 1);
-      }
-    };
-
-    window.addEventListener('srDataChanged', handleSRDataChange as EventListener);
-    return () => window.removeEventListener('srDataChanged', handleSRDataChange as EventListener);
-  }, [lesson.lesson_id]);
-
-  // Вычисляем метрики урока
+const LessonCard: React.FC<LessonCardProps> = ({ 
+  lesson, 
+  progress, 
+  vocabStats, 
+  srState, 
+  difficultWords,
+  onSelect, 
+  onDelete 
+}) => {
+  // Вычисляем метрики урока (Pure, derived from props)
   const metrics = useMemo(() => {
-    const m = getLessonMetrics(lesson, progress);
+    const m = getLessonMetrics(
+      lesson, 
+      progress, 
+      vocabStats, 
+      srState, 
+      difficultWords
+    );
     console.log(`📊 LessonCard #${lesson.lesson_id}:`, {
       title: lesson.title,
       progress,
@@ -45,7 +46,7 @@ const LessonCard: React.FC<LessonCardProps> = ({ lesson, progress, onSelect, onD
       daysSinceLastStudy: m.daysSinceLastStudy
     });
     return m;
-  }, [lesson, progress, srDataUpdateTrigger]);
+  }, [lesson, progress, vocabStats, srState, difficultWords]);
 
   // Определяем цвет полосы и статус
   const getStatusColor = () => {

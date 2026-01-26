@@ -1,14 +1,17 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Vocabulary, Lesson } from '../types';
 import { validateAnswer } from '../services/validationService';
-import { sortBySpacedRepetition } from '../services/spacedRepetition';
-import { recordExamAnswer } from '../services/vocabularyStatistics';
-import { initializeLessonProgress, recordWordExamAttempt } from '../services/progressService';
+import { sortBySpacedRepetition, SRState } from '../services/spacedRepetition';
+import { VocabStatsState } from '../services/vocabularyStatistics';
 
 interface ExamModeProps {
   vocabulary: Vocabulary[];
   lessonId: string;
-  lesson: Lesson; // Добавляем полный объект урока для инициализации
+  lesson: Lesson;
+  srState: SRState;
+  difficultWords: Set<string>;
+  vocabStats: VocabStatsState;
+  onExamAttempt: (word: string, isCorrect: boolean) => void;
   onFinish: () => void;
 }
 
@@ -21,7 +24,16 @@ interface ExamResult {
 
 type ExamPhase = 'exam' | 'results';
 
-const ExamMode: React.FC<ExamModeProps> = ({ vocabulary, lessonId, lesson, onFinish }) => {
+const ExamMode: React.FC<ExamModeProps> = ({ 
+  vocabulary, 
+  lessonId, 
+  lesson, 
+  srState,
+  difficultWords,
+  vocabStats,
+  onExamAttempt, 
+  onFinish 
+}) => {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [userAnswer, setUserAnswer] = useState('');
   const [phase, setPhase] = useState<ExamPhase>('exam');
@@ -29,12 +41,8 @@ const ExamMode: React.FC<ExamModeProps> = ({ vocabulary, lessonId, lesson, onFin
   const [answered, setAnswered] = useState(false);
   const [feedback, setFeedback] = useState<{ message: string; isCorrect: boolean } | null>(null);
 
-  // Инициализировать прогресс урока при загрузке экзамена
-  useEffect(() => {
-    initializeLessonProgress(lesson);
-  }, [lesson, lessonId]);
-
-  const sortedVocab = sortBySpacedRepetition(vocabulary, lessonId);
+  // sortedVocab calculation uses pure sortBySpacedRepetition
+  const sortedVocab = sortBySpacedRepetition(vocabulary, srState, difficultWords, vocabStats);
   const current = sortedVocab[currentIndex];
 
   const handleSubmitAnswer = () => {
@@ -47,11 +55,8 @@ const ExamMode: React.FC<ExamModeProps> = ({ vocabulary, lessonId, lesson, onFin
     );
     const wordId = `word_${originalVocabIndex}`;
 
-    // Записываем результат экзамена в статистику (старая система)
-    recordExamAnswer(lessonId, current.word, isCorrect);
-    
-    // Записываем результат в новую систему прогресса
-    recordWordExamAttempt(lessonId, wordId, isCorrect);
+    // Записываем результат через callback
+    onExamAttempt(current.word, isCorrect);
 
     const newResult: ExamResult = {
       word: current.word,

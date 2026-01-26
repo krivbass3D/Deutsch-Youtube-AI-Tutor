@@ -3,7 +3,6 @@ import React, { useState, useRef, useEffect } from 'react';
 import { getTutorResponse } from '../services/aiService';
 import { validateAnswer } from '../services/validationService';
 import { trackAPIRequest, trackLocalValidation } from '../services/tokenTracker';
-import { initializeLessonProgress, recordExerciseAttempt } from '../services/progressService';
 import { Lesson, ChatMessage } from '../types';
 
 interface TutorChatProps {
@@ -12,20 +11,26 @@ interface TutorChatProps {
   currentExerciseIndex: number;
   currentTaskIndex: number;
   onFeedback: (isCorrect: boolean, userAnswer: string) => void;
+  onExerciseAttempt: (isCorrect: boolean, isFirstAttempt: boolean) => void;
   resetChat?: number; // timestamp to clear chat
 }
 
-const TutorChat: React.FC<TutorChatProps> = ({ lesson, lessonId, currentExerciseIndex, currentTaskIndex, onFeedback, resetChat }) => {
+const TutorChat: React.FC<TutorChatProps> = ({ 
+  lesson, 
+  lessonId, 
+  currentExerciseIndex, 
+  currentTaskIndex, 
+  onFeedback, 
+  onExerciseAttempt,
+  resetChat 
+}) => {
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [inputValue, setInputValue] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [firstAttemptTracker, setFirstAttemptTracker] = useState<Record<string, boolean>>({});
   const scrollRef = useRef<HTMLDivElement>(null);
 
-  // Инициализировать прогресс урока при загрузке компонента
-  useEffect(() => {
-    initializeLessonProgress(lesson);
-  }, [lesson, lessonId]);
+
 
   // Отслеживать первую попытку при смене упражнения/задачи
   useEffect(() => {
@@ -88,17 +93,14 @@ const TutorChat: React.FC<TutorChatProps> = ({ lesson, lessonId, currentExercise
             timestamp: Date.now(),
           };
 
-          setMessages(prev => [...prev, modelMsg]);
           onFeedback(validationResult.isCorrect, currentInput);
           trackLocalValidation(); // 📊 Запись локальной валидации
 
-          // 📈 Записываем результат в progressService
-          const exerciseTitle = lesson.exercises[currentExerciseIndex]?.title || `Exercise${currentExerciseIndex + 1}`;
-          const exerciseId = `exercise_${exerciseTitle}_task_${currentTaskIndex}`;
+          // 📈 Записываем результат через callback
           const exerciseKey = `${currentExerciseIndex}_${currentTaskIndex}`;
           const wasFirstAttempt = firstAttemptTracker[exerciseKey] === true;
           
-          recordExerciseAttempt(lessonId, exerciseId, validationResult.isCorrect, wasFirstAttempt);
+          onExerciseAttempt(validationResult.isCorrect, wasFirstAttempt);
           
           // Отмечаем, что первая попытка уже использована
           setFirstAttemptTracker(prev => ({
@@ -146,13 +148,11 @@ const TutorChat: React.FC<TutorChatProps> = ({ lesson, lessonId, currentExercise
         onFeedback(false, currentInput);
       }
 
-      // 📈 Записываем результат в progressService (для API валидации)
-      const exerciseTitle = lesson.exercises[currentExerciseIndex]?.title || `Exercise${currentExerciseIndex + 1}`;
-      const exerciseId = `exercise_${exerciseTitle}_task_${currentTaskIndex}`;
+      // 📈 Записываем результат через callback
       const exerciseKey = `${currentExerciseIndex}_${currentTaskIndex}`;
       const wasFirstAttempt = firstAttemptTracker[exerciseKey] === true;
       
-      recordExerciseAttempt(lessonId, exerciseId, isCorrect, wasFirstAttempt);
+      onExerciseAttempt(isCorrect, wasFirstAttempt);
       
       // Отмечаем, что первая попытка уже использована
       setFirstAttemptTracker(prev => ({

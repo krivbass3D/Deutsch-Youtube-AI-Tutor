@@ -1,26 +1,47 @@
-import React, { useEffect, useState } from 'react';
+import React from 'react';
 import { Vocabulary } from '../types';
-import { getLessonStatistics, getProblematicWords, getNeedHelpWords, formatTime, WordStatistics } from '../services/vocabularyStatistics';
+import { 
+  WordStatistics, 
+  VocabStatsState, 
+  calculateAggregateStats, 
+  formatTime 
+} from '../services/vocabularyStatistics';
 import SpacedRepetitionStats from './SpacedRepetitionStats';
+import { SRState } from '../services/spacedRepetition';
 
 interface StatisticsDashboardProps {
-  lessonId: string;
-  vocabulary?: Vocabulary[];
+  lessonId: string; // Still useful for ID display if needed
+  vocabulary: Vocabulary[];
+  vocabStats: VocabStatsState;
+  srState: SRState;
 }
 
-const StatisticsDashboard: React.FC<StatisticsDashboardProps> = ({ lessonId, vocabulary = [] }) => {
-  const [totalStats, setTotalStats] = useState(getLessonStatistics(lessonId));
-  const [problematic, setProblematic] = useState<WordStatistics[]>([]);
-  const [needHelp, setNeedHelp] = useState<WordStatistics[]>([]);
+const StatisticsDashboard: React.FC<StatisticsDashboardProps> = ({ 
+  lessonId, 
+  vocabulary, 
+  vocabStats,
+  srState 
+}) => {
+  // Calculate aggregated stats from the passed state map
+  const aggStats = calculateAggregateStats(vocabStats);
+  
+  // Helper to filter words
+  const getProblematic = () => {
+    return Object.values(vocabStats)
+      .filter(w => w.repeatCount >= 3 || w.isDifficult)
+      .sort((a, b) => b.repeatCount - a.repeatCount);
+  };
 
-  useEffect(() => {
-    const stats = getLessonStatistics(lessonId);
-    setTotalStats(stats);
-    setProblematic(getProblematicWords(lessonId));
-    setNeedHelp(getNeedHelpWords(lessonId));
-  }, [lessonId]);
+  const getNeedHelp = () => {
+    return Object.values(vocabStats)
+      .filter(w => w.totalTimeSpent > 20 && w.correctAnswersInExam === 0)
+      .sort((a, b) => b.totalTimeSpent - a.totalTimeSpent);
+  };
 
-  if (totalStats.totalWordsStudied === 0) {
+  const problematic = getProblematic();
+  const needHelp = getNeedHelp();
+
+  if (aggStats.totalWordsStudied === 0) {
     return (
       <div className="bg-slate-50 rounded-2xl p-6 text-center text-slate-500 italic">
         📊 Статистика пока пуста. Начните изучение слов!
@@ -31,27 +52,29 @@ const StatisticsDashboard: React.FC<StatisticsDashboardProps> = ({ lessonId, voc
   return (
     <div className="space-y-6">
       {/* Статистика Spaced Repetition */}
-      {vocabulary.length > 0 && (
-        <SpacedRepetitionStats vocabulary={vocabulary} lessonId={lessonId} />
-      )}
+      <SpacedRepetitionStats 
+        vocabulary={vocabulary} 
+        srState={srState}
+      />
+      
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
         <div className="bg-blue-50 rounded-xl p-4 border border-blue-200">
-          <p className="text-2xl font-bold text-blue-700">{totalStats.totalWordsStudied}</p>
+          <p className="text-2xl font-bold text-blue-700">{aggStats.totalWordsStudied}</p>
           <p className="text-xs text-slate-600">слов изучено</p>
         </div>
         <div className="bg-green-50 rounded-xl p-4 border border-green-200">
-          <p className="text-2xl font-bold text-green-700">{totalStats.averageRepeatCount.toFixed(1)}</p>
+          <p className="text-2xl font-bold text-green-700">{aggStats.averageRepeatCount.toFixed(1)}</p>
           <p className="text-xs text-slate-600">средний повтор</p>
         </div>
         <div className="bg-amber-50 rounded-xl p-4 border border-amber-200">
-          <p className="text-2xl font-bold text-amber-700">{totalStats.wordsWithDifficulty}</p>
+          <p className="text-2xl font-bold text-amber-700">{aggStats.wordsWithDifficulty}</p>
           <p className="text-xs text-slate-600">сложных слов</p>
         </div>
         <div className="bg-purple-50 rounded-xl p-4 border border-purple-200">
           <p className="text-2xl font-bold text-purple-700">
-            {totalStats.wordStats.size > 0
+            {Object.values(vocabStats).length > 0
               ? formatTime(
-                  Array.from(totalStats.wordStats.values() as any[]).reduce((sum: number, w: any) => sum + (w.totalTimeSpent || 0), 0)
+                  Object.values(vocabStats).reduce((sum, w) => sum + (w.totalTimeSpent || 0), 0)
                 )
               : '0сек'}
           </p>
@@ -120,9 +143,9 @@ const StatisticsDashboard: React.FC<StatisticsDashboardProps> = ({ lessonId, voc
           Все слова урока
         </h3>
         <div className="space-y-1 max-h-80 overflow-y-auto">
-          {(Array.from(totalStats.wordStats.values() as any[]) as any[])
-            .sort((a: any, b: any) => (b.repeatCount || 0) - (a.repeatCount || 0))
-            .map((word: any) => (
+          {Object.values(vocabStats)
+            .sort((a, b) => (b.repeatCount || 0) - (a.repeatCount || 0))
+            .map((word) => (
               <div
                 key={word.word}
                 className={`p-2 rounded-lg text-xs flex justify-between items-center ${

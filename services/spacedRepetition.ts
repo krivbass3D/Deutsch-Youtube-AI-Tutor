@@ -1,13 +1,12 @@
 /**
  * Сервис алгоритма Spaced Repetition
- * Параметры:
- * - Дни повторения: 1, 3, 7, 14, 30
- * - "Выученное" слово: 5+ успешных повторений
- * - Сложные слова: повышенная частота повторений
+ * Refactored for Supabase: Operates on passed state instead of LocalStorage
  */
 
-import { getWordStat } from './vocabularyStatistics';
-import { isWordDifficult } from './difficultyTracker';
+import { WordStatistics } from './vocabularyStatistics';
+
+// We now expect the state to be passed in, looking like Dictionary<string, SpacedRepetitionData>
+export type SRState = Record<string, SpacedRepetitionData>;
 
 export interface SpacedRepetitionData {
   word: string;
@@ -23,35 +22,23 @@ export interface SpacedRepetitionData {
   isDue: boolean; // true если пора повторять
 }
 
-const SPACED_REPETITION_KEY = 'spaced_repetition_v1';
-
 /**
  * Стандартные дни повторения для базового алгоритма
  */
 const REPETITION_SCHEDULE = [1, 3, 7, 14, 30]; // дни
 
 /**
- * Получить данные SR для конкретного слова
+ * Получить данные SR для конкретного слова из состояния
  */
 export const getSpacedRepetitionData = (
-  lessonId: string,
+  srState: SRState,
   word: string,
   translation: string,
   type: string
 ): SpacedRepetitionData => {
-  try {
-    const key = `${SPACED_REPETITION_KEY}_${lessonId}_${word}`;
-    const saved = localStorage.getItem(key);
-    
-    if (saved) {
-      const data = JSON.parse(saved);
-      console.log(`      ✓ "${word}": найдено reviewCount=${data.reviewCount}`);
-      return data;
-    } else {
-      console.log(`      ✗ "${word}": НЕ найдено в localStorage`);
-    }
-  } catch (e) {
-    console.error('❌ Ошибка загрузки SR данных:', e);
+  const existing = srState[word];
+  if (existing) {
+    return existing;
   }
 
   // Новое слово
@@ -71,32 +58,18 @@ export const getSpacedRepetitionData = (
 };
 
 /**
- * Сохранить SR данные
- */
-const saveSpacedRepetitionData = (lessonId: string, data: SpacedRepetitionData): void => {
-  try {
-    const key = `${SPACED_REPETITION_KEY}_${lessonId}_${data.word}`;
-    localStorage.setItem(key, JSON.stringify(data));
-  } catch (e) {
-    console.error('❌ Ошибка сохранения SR данных:', e);
-  }
-};
-
-/**
  * Зафиксировать успешное повторение слова
- * Используется после правильного ответа в тестовом режиме
+ * Возвращает ОБНОВЛЕННОЕ состояние (копию)
  */
 export const recordSuccessfulReview = (
-  lessonId: string,
+  srState: SRState,
   word: string,
   translation: string,
-  type: string
-): SpacedRepetitionData => {
-  const data = getSpacedRepetitionData(lessonId, word, translation, type);
-  const isDifficult = isWordDifficult(lessonId, word);
-
-  console.log(`🔍 recordSuccessfulReview: "${word}" в уроке #${lessonId}, текущий reviewCount: ${data.reviewCount}`);
-
+  type: string,
+  isDifficult: boolean
+): SRState => {
+  const data = { ...getSpacedRepetitionData(srState, word, translation, type) };
+  
   data.lastReviewDate = new Date().toISOString();
   data.reviewCount++;
   
@@ -118,30 +91,25 @@ export const recordSuccessfulReview = (
   const nextReview = new Date();
   nextReview.setDate(nextReview.getDate() + data.interval);
   data.nextReviewDate = nextReview.toISOString();
-
-  saveSpacedRepetitionData(lessonId, data);
   
-  console.log(`✅ Успешный повтор: "${word}" (${data.reviewCount}), isLearned: ${data.isLearned}, следующий через ${data.interval} дней`);
-  
-  // Диспатч события об обновлении SR данных, чтобы компоненты могли пересчитать метрики
-  window.dispatchEvent(new CustomEvent('srDataChanged', { 
-    detail: { lessonId, word, reviewCount: data.reviewCount, isLearned: data.isLearned }
-  }));
-  
-  return data;
+  // Return updated state map
+  return {
+    ...srState,
+    [word]: data
+  };
 };
 
 /**
  * Зафиксировать ошибку при повторении
- * Сбрасывает интервал и уменьшает множитель
+ * Возвращает ОБНОВЛЕННОЕ состояние
  */
 export const recordFailedReview = (
-  lessonId: string,
+  srState: SRState,
   word: string,
   translation: string,
   type: string
-): SpacedRepetitionData => {
-  const data = getSpacedRepetitionData(lessonId, word, translation, type);
+): SRState => {
+  const data = { ...getSpacedRepetitionData(srState, word, translation, type) };
   
   data.lastReviewDate = new Date().toISOString();
   data.failureCount++;
@@ -160,26 +128,18 @@ export const recordFailedReview = (
   nextReview.setDate(nextReview.getDate() + 1);
   data.nextReviewDate = nextReview.toISOString();
 
-  saveSpacedRepetitionData(lessonId, data);
-  
-  console.log(`❌ Ошибка повтора: "${word}" (${data.failureCount}), повтор через 1 день`);
-  
-  return data;
+  return {
+    ...srState,
+    [word]: data
+  };
 };
 
 /**
  * Проверить, пора ли повторять слово
  */
-export const isWordDue = (lessonId: string, word: string): boolean => {
-  const stats = getWordStat(lessonId, word);
-  if (!stats) return true; // Новое слово — доступно сразу
-
-  const data = getSpacedRepetitionData(
-    lessonId,
-    word,
-    stats.translation,
-    'Noun' // Тип значения по умолчанию
-  );
+export const isWordDue = (srState: SRState, word: string): boolean => {
+  const data = srState[word];
+  if (!data) return true; // Новое слово — доступно сразу
 
   if (!data.nextReviewDate) return true;
 
@@ -188,53 +148,53 @@ export const isWordDue = (lessonId: string, word: string): boolean => {
   today.setHours(0, 0, 0, 0);
   nextDate.setHours(0, 0, 0, 0);
 
-  data.isDue = nextDate <= today;
-  return data.isDue;
+  return nextDate <= today;
 };
 
 /**
- * Отсортировать словарь по приоритету SR
- * 1. Слова, которые пора повторять (isDue)
- * 2. Сложные слова (более частые повторения)
- * 3. Слова с мало успешными повторами
- * 4. Остальные
+ * Helper to perform sort based on state
  */
 export const sortBySpacedRepetition = (
   vocabulary: Array<{ word: string; translation: string; type: string }>,
-  lessonId: string
+  srState: SRState,
+  difficultWords: Set<string>,
+  wordStats: Record<string, WordStatistics>
 ): Array<{ word: string; translation: string; type: string }> => {
-  const isDifficult = (word: string) => isWordDifficult(lessonId, word);
+  
   const isLearned = (word: string): boolean => {
-    const stats = getWordStat(lessonId, word);
-    if (!stats) return false;
-    return stats.repeatCount >= 5;
+    const stats = wordStats[word];
+    const sr = srState[word];
+    // Check both potential sources (legacy stats vs SR logic)
+    if (sr && sr.isLearned) return true;
+    if (stats && stats.repeatCount >= 5) return true;
+    return false;
   };
 
-  return vocabulary.sort((a, b) => {
-    const aDue = isWordDue(lessonId, a.word);
-    const bDue = isWordDue(lessonId, b.word);
-    const aStats = getWordStat(lessonId, a.word);
-    const bStats = getWordStat(lessonId, b.word);
-    const aLearned = isLearned(a.word);
-    const bLearned = isLearned(b.word);
-    const aDifficult = isDifficult(a.word);
-    const bDifficult = isDifficult(b.word);
-
+  return [...vocabulary].sort((a, b) => {
+    const aDue = isWordDue(srState, a.word);
+    const bDue = isWordDue(srState, b.word);
+    
     // 1. Слова к повторению (isDue) имеют приоритет
     if (aDue && !bDue) return -1;
     if (!aDue && bDue) return 1;
 
+    const aDifficult = difficultWords.has(a.word);
+    const bDifficult = difficultWords.has(b.word);
+
     // 2. Среди слов к повторению: сложные впереди
     if (aDifficult && !bDifficult) return -1;
     if (!aDifficult && bDifficult) return 1;
+
+    const aLearned = isLearned(a.word);
+    const bLearned = isLearned(b.word);
 
     // 3. Невыученные слова впереди (меньше успешных повторов)
     if (!aLearned && bLearned) return -1;
     if (aLearned && !bLearned) return 1;
 
     // 4. Меньше успешных повторов = впереди
-    const aRepeat = aStats?.repeatCount || 0;
-    const bRepeat = bStats?.repeatCount || 0;
+    const aRepeat = wordStats[a.word]?.repeatCount || 0;
+    const bRepeat = wordStats[b.word]?.repeatCount || 0;
     if (aRepeat !== bRepeat) return aRepeat - bRepeat;
 
     return 0;
@@ -242,68 +202,40 @@ export const sortBySpacedRepetition = (
 };
 
 /**
- * Получить статистику SR по уроку
+ * Получить статистику SR по уроку (Pure)
  */
 export const getSpacedRepetitionStats = (
   vocabulary: Array<{ word: string; translation: string; type: string }>,
-  lessonId: string
+  srState: SRState,
+  difficultWords: Set<string>
 ) => {
   let totalWords = vocabulary.length;
   let dueWords = 0; // пора повторять
   let learnedWords = 0; // выученные (5+ повторов)
-  let difficultWords = 0;
-
-  console.log(`\n🔍 getSpacedRepetitionStats #${lessonId}: анализирую ${totalWords} слов...`);
+  let difficultCount = 0;
 
   vocabulary.forEach(item => {
-    // Получаем SR данные напрямую, а не через vocabularyStatistics
-    const srData = getSpacedRepetitionData(lessonId, item.word, item.translation, item.type);
+    const srData = getSpacedRepetitionData(srState, item.word, item.translation, item.type);
     
-    console.log(`  📄 "${item.word}": reviewCount=${srData.reviewCount}, isLearned=${srData.isLearned}, isDue=${srData.isDue}`);
+    if (isWordDue(srState, item.word)) dueWords++;
     
-    if (isWordDue(lessonId, item.word)) dueWords++;
-    
-    // Используем reviewCount из SR, а не repeatCount из словаря
     if (srData.reviewCount >= 5 || srData.isLearned) {
       learnedWords++;
-      console.log(`    ✅ ВЫУЧЕНО!`);
     }
     
-    if (isWordDifficult(lessonId, item.word)) difficultWords++;
+    // Check if in difficult set OR marked difficult in SR (if we track it there? we track failureCount)
+    // The legacy code used `isWordDifficult` which checked the set.
+    if (difficultWords.has(item.word)) difficultCount++;
   });
-
-  console.log(`📊 ИТОГ: learnedWords=${learnedWords}/${totalWords}\n`);
 
   return {
     totalWords,
     dueWords,
     learnedWords,
-    difficultWords,
-    readyPercent: Math.round((learnedWords / totalWords) * 100) || 0,
-    needRepeatPercent: Math.round((dueWords / totalWords) * 100) || 0
+    difficultWords: difficultCount,
+    readyPercent: totalWords > 0 ? Math.round((learnedWords / totalWords) * 100) : 0,
+    needRepeatPercent: totalWords > 0 ? Math.round((dueWords / totalWords) * 100) : 0
   };
 };
 
-/**
- * Получить слова, готовые к повторению (для быстрого доступа)
- */
-export const getDueWords = (
-  vocabulary: Array<{ word: string; translation: string; type: string }>,
-  lessonId: string
-): typeof vocabulary => {
-  return vocabulary.filter(word => isWordDue(lessonId, word.word));
-};
 
-/**
- * Сбросить SR прогресс (для тестирования)
- */
-export const resetSpacedRepetition = (lessonId: string): void => {
-  try {
-    const keys = Object.keys(localStorage);
-    const srKeys = keys.filter(k => k.startsWith(`${SPACED_REPETITION_KEY}_${lessonId}_`));
-    srKeys.forEach(k => localStorage.removeItem(k));
-    console.log(`🔄 SR прогресс урока #${lessonId} сброшен`);
-  } catch (e) {
-    console.error('❌ Ошибка сброса SR прогресса:', e);
-  }
-};

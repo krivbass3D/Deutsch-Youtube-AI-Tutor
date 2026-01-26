@@ -5,37 +5,70 @@
  */
 
 import React, { useMemo } from 'react';
-import { Lesson, LessonData } from '../types';
-import { getDashboardStats, getLessonMetrics, getLessonData, getProgress } from '../services/progressService';
+import { Lesson } from '../types';
 
 interface GlobalDashboardProps {
   lessons: Lesson[];
+  userStates: any[]; // Array of DB records
   onSelectLesson?: (lessonId: string) => void;
 }
 
-const GlobalDashboard: React.FC<GlobalDashboardProps> = ({ lessons, onSelectLesson }) => {
-  // Получить статистику dashboard из новой системы
-  const dashboardStats = useMemo(() => {
-    return getDashboardStats();
-  }, []);
-
-  // Получить данные по всем урокам
+const GlobalDashboard: React.FC<GlobalDashboardProps> = ({ lessons, userStates = [], onSelectLesson }) => {
+  
+  // Calculate aggregates from userStates
   const allProgress = useMemo(() => {
-    const progress = getProgress();
-    return progress.lessons;
-  }, []);
+    const map: Record<string, any> = {};
+    userStates.forEach(state => {
+      map[state.lesson_id] = state;
+    });
+    return map;
+  }, [userStates]);
+
+  const dashboardStats = useMemo(() => {
+    let totalWordsLearned = 0;
+    let wordsLearnedThisWeek = 0;
+    let lessonsInProgress = 0;
+    let lessonsCompleted = 0;
+
+    userStates.forEach(state => {
+      // Check vocab stats for learned words
+      const vocab = state.vocabulary_stats || {};
+      const learned = Object.values(vocab).filter((w: any) => w.repeatCount >= 5).length; // rough "learned" metric
+      totalWordsLearned += learned;
+      
+      // We don't track "this week" in vocab stats easily unless we check dates.
+      // Let's simplified assumption: if updated recently?
+      // For now set to 0 or same as total.
+      wordsLearnedThisWeek += 0; // consistent placeholder
+
+      if (state.progress?.completed) {
+        lessonsCompleted++;
+      } else if (state.progress?.currentExerciseIdx > 0 || state.progress?.vocabCompleted) {
+        lessonsInProgress++;
+      }
+    });
+
+    return { totalWordsLearned, wordsLearnedThisWeek, lessonsInProgress, lessonsCompleted };
+  }, [userStates]);
 
   // Вычислить общую точность упражнений
   const overallAccuracy = useMemo(() => {
-    const allLessons = Object.values(allProgress);
-    if (allLessons.length === 0) return 0;
+    if (userStates.length === 0) return 0;
     
-    const totalExercises = allLessons.reduce((sum, lesson) => sum + lesson.metrics.totalExercises, 0);
-    const learnedExercises = allLessons.reduce((sum, lesson) => sum + lesson.metrics.exercisesLearned, 0);
+    let totalCorrect = 0;
+    let totalAttempts = 0;
+
+    userStates.forEach(state => {
+        const stats = state.progress?.statistics;
+        if (stats) {
+            totalCorrect += (stats.correct || 0);
+            totalAttempts += (stats.correct || 0) + (stats.incorrect || 0);
+        }
+    });
     
-    if (totalExercises === 0) return 0;
-    return Math.round((learnedExercises / totalExercises) * 100);
-  }, [allProgress]);
+    if (totalAttempts === 0) return 0;
+    return Math.round((totalCorrect / totalAttempts) * 100);
+  }, [userStates]);
 
   // Найти самые сложные и самые лёгкие уроки
   const lessonStats = useMemo(() => {
@@ -51,19 +84,47 @@ const GlobalDashboard: React.FC<GlobalDashboardProps> = ({ lessons, onSelectLess
     }> = [];
 
     lessons.forEach(lesson => {
-      const lessonData = allProgress[lesson.lesson_id];
-      if (lessonData) {
-        stats.push({
+      const state = allProgress[lesson.lesson_id];
+      // Calculate derived stats for this lesson
+      let accuracy = 0;
+      let wordsLearned = 0;
+      let totalWords = lesson.vocabulary?.length || 0;
+      let exercisesLearned = 0;
+      let totalExercises = lesson.exercises?.reduce((sum, ex) => sum + (ex.tasks?.length || 0), 0) || 0;
+      let status = 'not_started';
+
+      if (state) {
+          // Accuracy
+          const stats = state.progress?.statistics;
+          if (stats) {
+              const attempts = (stats.correct || 0) + (stats.incorrect || 0);
+              accuracy = attempts > 0 ? Math.round((stats.correct / attempts) * 100) : 0;
+          }
+
+          // Words Learned (repeat count >= 5)
+          if (state.vocabulary_stats) {
+              wordsLearned = Object.values(state.vocabulary_stats).filter((w: any) => w.repeatCount >= 5).length;
+          }
+
+          // Exercises Learned (simple approximation: correct answers count vs total task count?)
+          // Or just use percentage
+          exercisesLearned = Math.round((accuracy / 100) * totalExercises);
+
+          // Status
+          if (state.progress?.completed) status = 'completed';
+          else if (state.progress?.lastActivityAt) status = 'in_progress';
+      }
+
+      stats.push({
           lessonId: lesson.lesson_id,
           title: lesson.title,
-          accuracy: lessonData.metrics.exerciseAccuracy,
-          wordsLearned: lessonData.metrics.wordsLearned,
-          totalWords: lessonData.metrics.totalWords,
-          exercisesLearned: lessonData.metrics.exercisesLearned,
-          totalExercises: lessonData.metrics.totalExercises,
-          status: lessonData.status,
-        });
-      }
+          accuracy,
+          wordsLearned,
+          totalWords,
+          exercisesLearned,
+          totalExercises,
+          status,
+      });
     });
 
     return stats;

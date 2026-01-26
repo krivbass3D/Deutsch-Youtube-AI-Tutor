@@ -5,17 +5,47 @@
 
 import React from 'react';
 import { Vocabulary } from '../types';
-import { getSpacedRepetitionStats, isWordDue } from '../services/spacedRepetition';
-import { getWordStat } from '../services/vocabularyStatistics';
-import { isWordDifficult } from '../services/difficultyTracker';
+import { SRState } from '../services/spacedRepetition';
 
-interface SpacedRepetitionStatsProps {
-  vocabulary: Vocabulary[];
-  lessonId: string;
-}
+const SpacedRepetitionStats: React.FC<{ 
+  vocabulary: Vocabulary[]; 
+  srState: SRState;
+  // We can pass difficult words set if needed, but SR state might have easeFactor info
+}> = ({ vocabulary, srState }) => {
+  
+  const calculateStats = () => {
+    let totalWords = vocabulary.length;
+    let dueWords = 0;
+    let learnedWords = 0;
+    let difficultWords = 0;
 
-const SpacedRepetitionStats: React.FC<SpacedRepetitionStatsProps> = ({ vocabulary, lessonId }) => {
-  const stats = getSpacedRepetitionStats(vocabulary, lessonId);
+    vocabulary.forEach(word => {
+      const data = srState[word.word];
+      if (data) {
+        if (data.isDue) dueWords++;
+        if (data.isLearned) learnedWords++;
+        // We can check easeFactor < 2.5 or if we had a difficulty set passed
+        // But let's rely on data.easeFactor or similar if we don't pass difficultWords
+        // Actually, let's keep it simple. If we don't have difficult count here perfectly it's fine.
+        // Or we can count "struggling" words based on failureCount > 0
+        if (data.failureCount > 0) difficultWords++;
+      } else {
+        // New word, treat as due?
+        dueWords++;
+      }
+    });
+
+    return {
+      totalWords,
+      dueWords,
+      learnedWords,
+      difficultWords,
+      readyPercent: totalWords > 0 ? Math.round((learnedWords / totalWords) * 100) : 0,
+      needRepeatPercent: totalWords > 0 ? Math.round((dueWords / totalWords) * 100) : 0
+    };
+  };
+
+  const stats = calculateStats();
 
   return (
     <div className="bg-gradient-to-br from-blue-50 to-purple-50 rounded-3xl p-8 border-2 border-blue-200 space-y-6">
@@ -43,8 +73,8 @@ const SpacedRepetitionStats: React.FC<SpacedRepetitionStatsProps> = ({ vocabular
         {/* Сложные слова */}
         <div className="bg-white rounded-2xl p-4 border-2 border-red-200">
           <div className="text-3xl font-bold text-red-600">{stats.difficultWords}</div>
-          <div className="text-xs text-slate-600 mt-1">Отмечены сложные</div>
-          <div className="text-xs text-red-600 font-semibold">⭐ повышенная частота</div>
+          <div className="text-xs text-slate-600 mt-1">Ошибки</div>
+          <div className="text-xs text-red-600 font-semibold">⭐ были ошибки</div>
         </div>
 
         {/* Всего слов */}
@@ -83,7 +113,6 @@ const SpacedRepetitionStats: React.FC<SpacedRepetitionStatsProps> = ({ vocabular
         
         <div className="mt-4 pt-4 border-t-2 border-slate-200 text-xs text-slate-600">
           <p>⚠️ <strong>Важно:</strong> Если вы ошибётесь, счётчик сбросится, и начнётся заново!</p>
-          <p className="mt-2">⭐ <strong>Сложные слова:</strong> Повторяются чаще (интервал × 0.6)</p>
         </div>
       </div>
 

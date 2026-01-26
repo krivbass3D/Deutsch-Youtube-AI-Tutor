@@ -1,6 +1,6 @@
 /**
  * Сервис для отслеживания статистики запоминания слов
- * Отслеживает: количество повторов, время на карточке, прогресс
+ * Refactored for Supabase: Pure state manipulation
  */
 
 export interface WordStatistics {
@@ -13,54 +13,37 @@ export interface WordStatistics {
   correctAnswersInExam: number;  // Правильные ответы на экзамене
 }
 
-export interface LessonStatistics {
-  lessonId: string;
+// State is a Record (Map) of word -> statistics
+export type VocabStatsState = Record<string, WordStatistics>;
+
+export interface LessonStatisticsAggregated {
   totalWordsStudied: number;
   averageRepeatCount: number;
   wordsWithDifficulty: number;
   lastStudiedAt: string;
-  wordStats: Map<string, WordStatistics>;
 }
 
-const STATS_STORAGE_KEY = 'vocabulary_stats_v1';
-
 /**
- * Получить статистику по уроку
+ * Получить статистику по конкретному слову
  */
-export const getLessonStatistics = (lessonId: string): LessonStatistics => {
-  try {
-    const saved = localStorage.getItem(`${STATS_STORAGE_KEY}_lesson_${lessonId}`);
-    if (saved) {
-      const data = JSON.parse(saved);
-      data.wordStats = new Map(Object.entries(data.wordStats || {}));
-      return data;
-    }
-  } catch (e) {
-    console.error('❌ Ошибка загрузки статистики:', e);
-  }
-  
-  return {
-    lessonId,
-    totalWordsStudied: 0,
-    averageRepeatCount: 0,
-    wordsWithDifficulty: 0,
-    lastStudiedAt: new Date().toISOString(),
-    wordStats: new Map()
-  };
+export const getWordStat = (stats: VocabStatsState, word: string): WordStatistics | undefined => {
+  return stats[word];
 };
 
 /**
  * Зафиксировать просмотр слова (добавить повтор)
+ * Returns UPDATED state (whole map)
  */
 export const recordWordView = (
-  lessonId: string,
+  currentStats: VocabStatsState,
   word: string,
   translation: string,
   timeSpentSeconds: number,
   isDifficult: boolean = false
-): WordStatistics => {
-  const stats = getLessonStatistics(lessonId);
-  const wordStat = stats.wordStats.get(word) || {
+): VocabStatsState => {
+  const newStats = { ...currentStats };
+  
+  const existing = newStats[word] || {
     word,
     translation,
     repeatCount: 0,
@@ -70,91 +53,71 @@ export const recordWordView = (
     correctAnswersInExam: 0
   };
 
-  wordStat.repeatCount++;
-  wordStat.totalTimeSpent += timeSpentSeconds;
-  wordStat.lastSeenAt = new Date().toISOString();
-  wordStat.isDifficult = isDifficult;
+  newStats[word] = {
+    ...existing,
+    repeatCount: existing.repeatCount + 1,
+    totalTimeSpent: existing.totalTimeSpent + timeSpentSeconds,
+    lastSeenAt: new Date().toISOString(),
+    isDifficult
+  };
 
-  stats.wordStats.set(word, wordStat);
-  stats.lastStudiedAt = new Date().toISOString();
-  stats.totalWordsStudied = stats.wordStats.size;
-  stats.wordsWithDifficulty = Array.from(stats.wordStats.values()).filter(w => w.isDifficult).length;
-  
-  if (stats.wordStats.size > 0) {
-    stats.averageRepeatCount = 
-      Array.from(stats.wordStats.values()).reduce((sum, w) => sum + w.repeatCount, 0) / 
-      stats.wordStats.size;
-  }
-
-  saveLessonStatistics(lessonId, stats);
-  return wordStat;
+  return newStats;
 };
 
 /**
  * Записать правильный ответ на экзамене
  */
 export const recordExamAnswer = (
-  lessonId: string,
+  currentStats: VocabStatsState,
   word: string,
   isCorrect: boolean
-): void => {
-  const stats = getLessonStatistics(lessonId);
-  const wordStat = stats.wordStats.get(word);
-  
-  if (wordStat && isCorrect) {
-    wordStat.correctAnswersInExam++;
-    stats.wordStats.set(word, wordStat);
-    saveLessonStatistics(lessonId, stats);
-    console.log(`✅ Экзамен: "${word}" — правильный ответ (${wordStat.correctAnswersInExam} раз)`);
-  }
-};
+): VocabStatsState => {
+  if (!isCorrect) return currentStats;
 
-/**
- * Получить статистику по конкретному слову
- */
-export const getWordStat = (lessonId: string, word: string): WordStatistics | undefined => {
-  const stats = getLessonStatistics(lessonId);
-  return stats.wordStats.get(word);
-};
+  const newStats = { ...currentStats };
+  const existing = newStats[word];
 
-/**
- * Получить топ сложных слов (более 3 повторов)
- */
-export const getProblematicWords = (lessonId: string): WordStatistics[] => {
-  const stats = getLessonStatistics(lessonId);
-  return Array.from(stats.wordStats.values())
-    .filter(w => w.repeatCount >= 3 || w.isDifficult)
-    .sort((a, b) => b.repeatCount - a.repeatCount);
-};
-
-/**
- * Получить слова, которые требуют больше внимания
- * (много времени потрачено, но мало правильных ответов)
- */
-export const getNeedHelpWords = (lessonId: string): WordStatistics[] => {
-  const stats = getLessonStatistics(lessonId);
-  return Array.from(stats.wordStats.values())
-    .filter(w => w.totalTimeSpent > 20 && w.correctAnswersInExam === 0)
-    .sort((a, b) => b.totalTimeSpent - a.totalTimeSpent);
-};
-
-/**
- * Сохранить статистику в localStorage
- */
-const saveLessonStatistics = (lessonId: string, stats: LessonStatistics): void => {
-  try {
-    const data = {
-      ...stats,
-      wordStats: Object.fromEntries(stats.wordStats)
+  if (existing) {
+    newStats[word] = {
+      ...existing,
+      correctAnswersInExam: existing.correctAnswersInExam + 1
     };
-    localStorage.setItem(
-      `${STATS_STORAGE_KEY}_lesson_${lessonId}`,
-      JSON.stringify(data)
-    );
-    console.log(`💾 Статистика урока #${lessonId} сохранена`);
-  } catch (e) {
-    console.error('❌ Ошибка сохранения статистики:', e);
   }
+  
+  return newStats;
+};
+
+/**
+ * Вычислить агрегированную статистику
+ */
+export const calculateAggregateStats = (stats: VocabStatsState): LessonStatisticsAggregated => {
+  const values = Object.values(stats);
+  const totalWords = values.length;
+  
+  if (totalWords === 0) {
+    return {
+      totalWordsStudied: 0,
+      averageRepeatCount: 0,
+      wordsWithDifficulty: 0,
+      lastStudiedAt: new Date().toISOString()
+    };
+  }
+
+  const avgRepeat = values.reduce((sum, w) => sum + w.repeatCount, 0) / totalWords;
+  const difficultCount = values.filter(w => w.isDifficult).length;
+
+  // Find most recent date
+  let lastDate = values[0].lastSeenAt;
+  values.forEach(v => {
+    if (v.lastSeenAt > lastDate) lastDate = v.lastSeenAt;
+  });
+
+  return {
+    totalWordsStudied: totalWords,
+    averageRepeatCount: avgRepeat,
+    wordsWithDifficulty: difficultCount,
+    lastStudiedAt: lastDate
+  };
 };
 
 /**
@@ -165,14 +128,4 @@ export const formatTime = (seconds: number): string => {
   return `${Math.round(seconds / 60)}мин`;
 };
 
-/**
- * Очистить статистику урока
- */
-export const clearLessonStatistics = (lessonId: string): void => {
-  try {
-    localStorage.removeItem(`${STATS_STORAGE_KEY}_lesson_${lessonId}`);
-    console.log(`🗑️ Статистика урока #${lessonId} очищена`);
-  } catch (e) {
-    console.error('❌ Ошибка очистки статистики:', e);
-  }
-};
+

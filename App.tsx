@@ -8,120 +8,193 @@ import ExamMode from './components/ExamMode';
 import StatisticsDashboard from './components/StatisticsDashboard';
 import GlobalDashboard from './components/GlobalDashboard';
 import LessonCard from './components/LessonCard';
-import { sortBySpacedRepetition } from './services/spacedRepetition';
+// Services
+import { 
+  sortBySpacedRepetition, 
+  SRState, 
+  getSpacedRepetitionData,
+  recordSuccessfulReview,
+  recordFailedReview
+} from './services/spacedRepetition';
+import { 
+  VocabStatsState, 
+  recordWordView, 
+  recordExamAnswer 
+} from './services/vocabularyStatistics';
+import { 
+  DifficultyState, 
+  toggleDifficultWord, 
+  isWordDifficult 
+} from './services/difficultyTracker';
+import { lessonService } from './services/lessonService';
+import { userStateService } from './services/userStateService';
+
 import { AIProviderSelectorCompact } from './components/AIProviderSelectorCompact';
 import { ToastContainer, showToast } from './components/Toast';
+import { useAuth } from './components/AuthContext';
+import { AuthScreen } from './components/AuthScreen';
 
 type ViewMode = 'dashboard' | 'lesson-overview' | 'vocabulary' | 'practice' | 'exam' | 'add-lesson' | 'summary';
 
-const LESSONS_STORAGE_KEY = 'german_lessons_v1';
+// Type for the consolidated state we hold for the active lesson
+interface ActiveLessonState {
+  progress: LessonProgress;
+  srState: SRState;
+  vocabStats: VocabStatsState;
+  difficultWords: DifficultyState;
+}
 
 const App: React.FC = () => {
+  const { user, loading: authLoading, signOut } = useAuth();
   const [saveStatus, setSaveStatus] = useState<'idle' | 'saving' | 'saved' | 'error'>('idle');
   
-  // Persistence logic for Lessons with improved error handling
-  const [lessons, setLessons] = useState<Lesson[]>(() => {
-    console.log('🔄 Загрузка уроков из localStorage...');
-    try {
-      const saved = localStorage.getItem(LESSONS_STORAGE_KEY);
-      if (saved) {
-        const parsed = JSON.parse(saved);
-        if (Array.isArray(parsed) && parsed.length > 0) {
-          console.log(`✅ Загружено ${parsed.length} уроков из localStorage`);
-          return parsed;
-        }
-      }
-      console.log('ℹ️ localStorage пуст, загружаем стандартные уроки');
-    } catch (e) {
-      console.error('❌ Ошибка загрузки уроков:', e);
-    }
-    return INITIAL_LESSONS;
-  });
+  // Lessons fetched from DB
+  const [lessons, setLessons] = useState<Lesson[]>([]);
+  const [lessonsLoading, setLessonsLoading] = useState(true);
+  
+  // Global User States (for dashboard)
+  const [allUserStates, setAllUserStates] = useState<any[]>([]);
 
+  // Active Lesson State
   const [currentView, setCurrentView] = useState<ViewMode>('dashboard');
   const [selectedLesson, setSelectedLesson] = useState<Lesson | null>(null);
-  const [progress, setProgress] = useState<LessonProgress | null>(null);
-  const [jsonInput, setJsonInput] = useState('');
+  
+  // The big consolidated state object for the current lesson
+  const [lessonState, setLessonState] = useState<ActiveLessonState | null>(null);
+
+  // Helper to get progress part easily
+  const progress = lessonState?.progress || null;
+
   const [expandedVocabulary, setExpandedVocabulary] = useState(false);
   const [showStatistics, setShowStatistics] = useState(false);
-  const fileInputRef = useRef<HTMLInputElement>(null);
+  
+  // Stable vocabulary list for the current session to prevent re-sorting on every interaction
+  const [stableVocabulary, setStableVocabulary] = useState<Vocabulary[]>([]);
 
-  // Enhanced save with visual feedback
+  // Update stable vocabulary when entering vocabulary view
   useEffect(() => {
-    setSaveStatus('saving');
-    try {
-      localStorage.setItem(LESSONS_STORAGE_KEY, JSON.stringify(lessons));
-      console.log(`💾 Сохранено ${lessons.length} уроков в localStorage`);
-      setSaveStatus('saved');
-      setTimeout(() => setSaveStatus('idle'), 2000);
-    } catch (error) {
-      console.error('❌ Ошибка сохранения:', error);
-      setSaveStatus('error');
-      alert('⚠️ Не удалось сохранить данные. Возможно, переполнено хранилище браузера.');
+    if (currentView === 'vocabulary' && selectedLesson && lessonState && stableVocabulary.length === 0) {
+      const sorted = sortBySpacedRepetition(
+        selectedLesson.vocabulary || [], 
+        lessonState.srState, 
+        new Set(lessonState.difficultWords), 
+        lessonState.vocabStats 
+      );
+      setStableVocabulary(sorted);
     }
-  }, [lessons]);
+  }, [currentView, selectedLesson, lessonState, stableVocabulary.length]);
 
-  const selectLesson = (lesson: Lesson) => {
+  // Reset stable vocabulary when view changes
+  useEffect(() => {
+    if (currentView !== 'vocabulary') {
+      setStableVocabulary([]);
+    }
+  }, [currentView, selectedLesson?.lesson_id]);
+
+  // const fileInputRef = useRef<HTMLInputElement>(null);
+
+  // 1. Fetch Lessons on Mount
+  useEffect(() => {
+    const loadLessons = async () => {
+      try {
+        setLessonsLoading(true);
+        const data = await lessonService.fetchLessons();
+        if (data && data.length > 0) {
+          setLessons(data);
+        } else {
+          // Fallback if DB is empty? Or just show empty.
+          // For migration, we seeded, so it should be fine.
+          setLessons([]); 
+        }
+      } catch (err) {
+        console.error('Failed to load lessons:', err);
+      } finally {
+        setLessonsLoading(false);
+      }
+    };
+
+    const loadGlobalStats = async () => {
+      if (!user) return;
+      try {
+        const states = await userStateService.getAllUserLessonStates(user.id);
+        setAllUserStates(states || []);
+      } catch (err) {
+        console.error('Failed to load global stats:', err);
+      }
+    };
+
+    if (user) {
+      loadLessons();
+      loadGlobalStats();
+    } else {
+      setLessonsLoading(false);
+    }
+  }, [user]);
+
+  // 2. Select Lesson -> Fetch User State
+  const selectLesson = async (lesson: Lesson) => {
     setSelectedLesson(lesson);
     setExpandedVocabulary(false);
-    const saved = localStorage.getItem(`lesson_${lesson.lesson_id}_progress`);
-    if (saved) {
-      try {
-        const parsed = JSON.parse(saved) as LessonProgress;
-        console.log(`📖 Загружен прогресс урока #${lesson.lesson_id}`);
-        setProgress(parsed);
-      } catch (e) {
-        console.log(`ℹ️ Создание нового прогресса для урока #${lesson.lesson_id}`);
-        initializeProgress();
-      }
-    } else {
-      console.log(`ℹ️ Новый прогресс для урока #${lesson.lesson_id}`);
-      initializeProgress();
-    }
     setCurrentView('lesson-overview');
-  };
+    setLessonState(null); // Clear previous state while loading
 
-  const getLessonProgressFromStorage = (lessonId: string): LessonProgress | null => {
+    if (!user) return;
+
     try {
-      const saved = localStorage.getItem(`lesson_${lessonId}_progress`);
-      if (saved) {
-        return JSON.parse(saved) as LessonProgress;
+      console.log(`📖 Loading state for lesson #${lesson.lesson_id}...`);
+      const data = await userStateService.getUserLessonState(user.id, lesson.lesson_id);
+      
+      if (data) {
+        setLessonState({
+          progress: data.progress as LessonProgress,
+          srState: (data.spaced_repetition || {}) as SRState,
+          vocabStats: (data.vocabulary_stats || {}) as VocabStatsState,
+          difficultWords: (data.difficult_words || []) as DifficultyState
+        });
+      } else {
+        // Initialize new state
+        console.log(`ℹ️ Initializing new state for lesson #${lesson.lesson_id}`);
+        setLessonState({
+          progress: initializeProgress(),
+          srState: {},
+          vocabStats: {},
+          difficultWords: []
+        });
       }
-    } catch (e) {
-      console.error('Ошибка загрузки прогресса:', e);
+    } catch (err) {
+      console.error('Error loading lesson state:', err);
+      alert('Failed to load lesson progress. Please try again.');
+      setCurrentView('dashboard');
     }
-    return null;
   };
 
-  // Состояние для триггера обновления прогресса
-  const [progressUpdateTrigger, setProgressUpdateTrigger] = useState(0);
-
-  // Получаем прогресс для всех уроков (обновляется при изменении progress или lessons)
-  const lessonProgress = useMemo(() => {
-    const result: Record<string, LessonProgress> = {};
-    lessons.forEach(lesson => {
-      const prog = getLessonProgressFromStorage(lesson.lesson_id);
-      if (prog) {
-        result[lesson.lesson_id] = prog;
-      }
-    });
-    console.log('🔄 Обновлён прогресс для всех уроков:', Object.keys(result).length);
-    return result;
-  }, [lessons, progressUpdateTrigger]);
-
-  // Пересчитываем прогресс при изменении progress текущего урока
+  // 3. Save State Effect
+  // Debounce saving to Supabase when lessonState changes
   useEffect(() => {
-    if (progress && selectedLesson) {
-      // Запускаем пересчет всех прогрессов с задержкой для гарантии сохранения в localStorage
-      const timer = setTimeout(() => {
-        setProgressUpdateTrigger(prev => prev + 1);
-      }, 100);
-      return () => clearTimeout(timer);
-    }
-  }, [progress, selectedLesson]);
+    if (!user || !selectedLesson || !lessonState) return;
 
-  const initializeProgress = () => {
-    setProgress({
+    const timer = setTimeout(async () => {
+      setSaveStatus('saving');
+      try {
+        await userStateService.saveUserLessonState(user.id, selectedLesson.lesson_id, {
+          progress: lessonState.progress,
+          spaced_repetition: lessonState.srState,
+          vocabulary_stats: lessonState.vocabStats,
+          difficult_words: lessonState.difficultWords
+        });
+        setSaveStatus('saved');
+        setTimeout(() => setSaveStatus('idle'), 2000);
+      } catch (err) {
+        console.error('Error saving state:', err);
+        setSaveStatus('error');
+      }
+    }, 1000); // 1 second debounce
+
+    return () => clearTimeout(timer);
+  }, [lessonState, selectedLesson, user]);
+
+  const initializeProgress = (): LessonProgress => {
+    return {
       vocabSkipped: false,
       vocabCompleted: false,
       currentExerciseIdx: 0,
@@ -129,27 +202,26 @@ const App: React.FC = () => {
       statistics: { correct: 0, incorrect: 0, skipped: 0, answers: {} },
       completed: false,
       lastActivityAt: new Date().toISOString()
-    });
+    };
   };
 
-  useEffect(() => {
-    if (selectedLesson && progress) {
-      try {
-        localStorage.setItem(`lesson_${selectedLesson.lesson_id}_progress`, JSON.stringify(progress));
-        console.log(`💾 Прогресс урока #${selectedLesson.lesson_id} сохранён`);
-      } catch (error) {
-        console.error('❌ Ошибка сохранения прогресса:', error);
-      }
-    }
-  }, [progress, selectedLesson]);
+  // Handlers need to update lessonState now
+  const updateProgress = (newProgress: Partial<LessonProgress>) => {
+    if (!lessonState) return;
+    setLessonState(prev => prev ? ({
+      ...prev,
+      progress: { ...prev.progress, ...newProgress }
+    }) : null);
+  };
+
 
   const handleStartVocab = () => setCurrentView('vocabulary');
   const handleSkipVocab = () => {
-    if (progress) setProgress({ ...progress, vocabSkipped: true });
+    updateProgress({ vocabSkipped: true });
     setCurrentView('practice');
   };
   const handleVocabFinish = () => {
-    if (progress) setProgress({ ...progress, vocabCompleted: true });
+    updateProgress({ vocabCompleted: true });
     setCurrentView('practice');
   };
 
@@ -168,11 +240,11 @@ const App: React.FC = () => {
     }
 
     if (progress.currentTaskIdx < (currentEx.tasks?.length || 0) - 1) {
-      setProgress({ ...progress, currentTaskIdx: progress.currentTaskIdx + 1, statistics: updatedStats });
+      updateProgress({ currentTaskIdx: progress.currentTaskIdx + 1, statistics: updatedStats });
     } else if (progress.currentExerciseIdx < (selectedLesson.exercises?.length || 0) - 1) {
-      setProgress({ ...progress, currentExerciseIdx: progress.currentExerciseIdx + 1, currentTaskIdx: 0, statistics: updatedStats });
+      updateProgress({ currentExerciseIdx: progress.currentExerciseIdx + 1, currentTaskIdx: 0, statistics: updatedStats });
     } else {
-      setProgress({ ...progress, completed: true, statistics: updatedStats });
+      updateProgress({ completed: true, statistics: updatedStats });
       setCurrentView('summary');
     }
   };
@@ -180,12 +252,11 @@ const App: React.FC = () => {
   const handlePrevTask = () => {
     if (!selectedLesson || !progress || (progress.currentTaskIdx === 0 && progress.currentExerciseIdx === 0)) return;
     if (progress.currentTaskIdx > 0) {
-      setProgress({ ...progress, currentTaskIdx: progress.currentTaskIdx - 1 });
+      updateProgress({ currentTaskIdx: progress.currentTaskIdx - 1 });
     } else if (progress.currentExerciseIdx > 0) {
       const prevEx = selectedLesson.exercises?.[progress.currentExerciseIdx - 1];
       if (prevEx) {
-        setProgress({ 
-          ...progress, 
+        updateProgress({ 
           currentExerciseIdx: progress.currentExerciseIdx - 1, 
           currentTaskIdx: (prevEx.tasks?.length || 1) - 1 
         });
@@ -204,239 +275,26 @@ const App: React.FC = () => {
         updatedStats.correct += 1;
     }
     updatedStats.answers[key] = { userAnswer, correct: isCorrect };
-    setProgress({ ...progress, statistics: updatedStats });
+    updateProgress({ statistics: updatedStats });
   };
 
   const resetLesson = () => {
     if (!selectedLesson) return;
-    initializeProgress();
+    setLessonState(prev => prev ? ({
+        ...prev,
+        progress: initializeProgress()
+    }) : null);
     setCurrentView('lesson-overview');
   };
 
-  const deleteLesson = (e: React.MouseEvent, lessonId: string) => {
-    e.preventDefault();
-    e.stopPropagation();
-    
-    const idToDelete = String(lessonId);
-    const lesson = lessons.find(l => String(l.lesson_id) === idToDelete);
-    if (!lesson) return;
-
-    // Check if there's progress
-    const progressKey = `lesson_${idToDelete}_progress`;
-    const hasProgress = localStorage.getItem(progressKey) !== null;
-
-    let confirmMessage = `Вы уверены, что хотите удалить урок #${idToDelete}: "${lesson.title}"?`;
-    if (hasProgress) {
-      confirmMessage += '\n\n⚠️ У этого урока есть сохранённый прогресс, который будет потерян!';
-    }
-
-    if (window.confirm(confirmMessage)) {
-      console.log(`🗑️ Удаление урока #${idToDelete}`);
-      setLessons(prev => prev.filter(l => String(l.lesson_id) !== idToDelete));
-      localStorage.removeItem(progressKey);
-      
-      if (selectedLesson && String(selectedLesson.lesson_id) === idToDelete) {
-        setSelectedLesson(null);
-        setCurrentView('dashboard');
-      }
-      
-      console.log(`✅ Урок #${idToDelete} удалён`);
-    }
-  };
-
-  const clearAllData = () => {
-    const totalLessons = lessons.length;
-    if (window.confirm(`⚠️ Удалить ВСЕ ${totalLessons} уроков и весь прогресс обучения?\n\nЭто действие НЕОБРАТИМО!`)) {
-        console.log('🗑️ Очистка всех данных...');
-        
-        // Clear all lesson progress
-        Object.keys(localStorage).forEach(key => {
-            if (key.startsWith('lesson_')) {
-                localStorage.removeItem(key);
-            }
-        });
-        
-        // Clear lessons
-        localStorage.removeItem(LESSONS_STORAGE_KEY);
-        setLessons([]);
-        setSelectedLesson(null);
-        setCurrentView('dashboard');
-        
-        console.log('✅ Все данные очищены');
-        alert('✅ Все уроки и прогресс удалены');
-    }
-  };
-
-  const restoreDefaults = () => {
-    if (window.confirm("Восстановить стандартные уроки?\n\nВаши текущие уроки останутся, добавятся только отсутствующие.")) {
-        console.log('🔄 Восстановление стандартных уроков...');
-        const merged = [...lessons];
-        let addedCount = 0;
-        
-        INITIAL_LESSONS.forEach(initial => {
-            if (!lessons.find(l => String(l.lesson_id) === String(initial.lesson_id))) {
-                merged.push(initial);
-                addedCount++;
-            }
-        });
-        
-        setLessons(merged);
-        console.log(`✅ Добавлено ${addedCount} стандартных уроков`);
-        alert(`✅ Добавлено ${addedCount} стандартных уроков`);
-    }
-  };
-
-  const handleAddLesson = () => {
-    try {
-      // Robust JSON extraction
-      let cleanInput = jsonInput.trim();
-      const firstBrace = cleanInput.indexOf('{');
-      const lastBrace = cleanInput.lastIndexOf('}');
-      
-      if (firstBrace !== -1 && lastBrace !== -1 && lastBrace > firstBrace) {
-          cleanInput = cleanInput.substring(firstBrace, lastBrace + 1);
-      }
-
-      let raw = JSON.parse(cleanInput);
-      
-      let transformedLesson: Partial<Lesson> = {};
-      transformedLesson.lesson_id = String(raw.lesson_id || Date.now());
-      transformedLesson.title = raw.title || "Новый урок";
-      
-      // Transform vocabulary if needed
-      if (raw.vocabulary && !Array.isArray(raw.vocabulary) && typeof raw.vocabulary === 'object') {
-        const flatVocab: Vocabulary[] = [];
-        const mapping: Record<string, any> = { verbs: 'verb', nouns: 'noun', adverbs: 'adverb', adjectives: 'adjective' };
-        
-        Object.keys(raw.vocabulary).forEach(key => {
-          if (Array.isArray(raw.vocabulary[key])) {
-            raw.vocabulary[key].forEach((item: any) => {
-              flatVocab.push({
-                word: item.de || item.word || "Unknown",
-                translation: item.ru || item.translation || "Неизвестно",
-                type: mapping[key] || 'phrase'
-              });
-            });
-          }
-        });
-        transformedLesson.vocabulary = flatVocab;
-      } else {
-        transformedLesson.vocabulary = raw.vocabulary || [];
-      }
-
-      // Transform exercises if needed
-      if (Array.isArray(raw.exercises)) {
-        const exercises: Exercise[] = [];
-        const answers: Answer[] = [];
-        
-        raw.exercises.forEach((ex: any, idx: number) => {
-          if (ex.items && Array.isArray(ex.items)) {
-            exercises.push({
-              title: ex.description || ex.title || `Упражнение ${idx + 1}`,
-              tasks: ex.items.map((i: any) => i.ru)
-            });
-            answers.push({
-              exercise: idx + 1,
-              solutions: ex.items.map((i: any) => i.de)
-            });
-          } else if (ex.tasks && Array.isArray(ex.tasks)) {
-            exercises.push(ex);
-          }
-        });
-        
-        transformedLesson.exercises = exercises;
-        transformedLesson.answers = raw.answers && Array.isArray(raw.answers) ? raw.answers : answers;
-      }
-
-      const finalLesson = transformedLesson as Lesson;
-
-      // Validation
-      if (!finalLesson.lesson_id || !finalLesson.title || !Array.isArray(finalLesson.vocabulary) || !Array.isArray(finalLesson.exercises)) {
-        alert('❌ Ошибка валидации данных. Убедитесь, что JSON содержит lesson_id, title, vocabulary и exercises.');
-        return;
-      }
-
-      console.log(`➕ Добавление урока #${finalLesson.lesson_id}: ${finalLesson.title}`);
-
-      // Check for existing lesson
-      const existingIndex = lessons.findIndex(l => String(l.lesson_id) === String(finalLesson.lesson_id));
-      if (existingIndex !== -1) {
-        if (!window.confirm(`Урок #${finalLesson.lesson_id} уже существует. Заменить его?`)) return;
-        const updated = [...lessons];
-        updated[existingIndex] = finalLesson;
-        setLessons(updated);
-        console.log(`✅ Урок #${finalLesson.lesson_id} обновлён`);
-      } else {
-        setLessons(prev => [...prev, finalLesson]);
-        console.log(`✅ Урок #${finalLesson.lesson_id} добавлен`);
-      }
-
-      setJsonInput('');
-      setCurrentView('dashboard');
-      alert('✅ Урок успешно добавлен!');
-    } catch (err) {
-      console.error("❌ Ошибка парсинга JSON:", err);
-      alert('❌ Ошибка в формате JSON. Убедитесь, что вы вставили корректный объект в фигурных скобках {}.');
-    }
-  };
-
-  const exportLessons = () => {
-    if (lessons.length === 0) {
-      alert('Нет уроков для экспорта');
-      return;
-    }
-    
-    console.log(`📤 Экспорт ${lessons.length} уроков...`);
-    const data = {
-      export_date: new Date().toISOString(),
-      lessons_count: lessons.length,
-      lessons: lessons
-    };
-    
-    const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement('a');
-    link.href = url;
-    link.download = `german_lessons_backup_${new Date().toISOString().split('T')[0]}.json`;
-    link.click();
-    URL.revokeObjectURL(url);
-    
-    console.log('✅ Уроки экспортированы');
-  };
-
-  const importLessons = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-    
-    console.log(`📥 Импорт из файла: ${file.name}`);
-    const reader = new FileReader();
-    
-    reader.onload = (event) => {
-      try {
-        const data = JSON.parse(event.target?.result as string);
-        if (data.lessons && Array.isArray(data.lessons)) {
-          if (window.confirm(`Импортировать ${data.lessons.length} уроков?\n\nСуществующие уроки с такими же ID будут заменены.`)) {
-            const newLessonsMap = new Map();
-            lessons.forEach(l => newLessonsMap.set(String(l.lesson_id), l));
-            data.lessons.forEach((l: Lesson) => newLessonsMap.set(String(l.lesson_id), l));
-            
-            const importedLessons = Array.from(newLessonsMap.values());
-            setLessons(importedLessons);
-            
-            console.log(`✅ Импортировано ${data.lessons.length} уроков`);
-            alert(`✅ Импортировано ${data.lessons.length} уроков`);
-          }
-        } else {
-          alert('❌ Неверный формат файла');
-        }
-      } catch (err) {
-        console.error('❌ Ошибка импорта:', err);
-        alert('❌ Ошибка чтения файла');
-      }
-    };
-    
-    reader.readAsText(file);
-  };
+  // Dashboard View (Global)
+  // Note: GlobalDashboard currently only shows progress based on what we pass. 
+  // For Supabase, we would ideally fetch ALL user progress at once.
+  // For now, let's keep it simple. If we need to show progress on cards, 
+  // we might need another effect to load summary data. 
+  // BUT: userStateService allows fetching single state. 
+  // To avoid N+1 requests, we should have an endpoint for all progress.
+  // Skipping global progress visualization on cards for this step (or showing 0%).
 
   const totalTasks = useMemo(() => {
     if (!selectedLesson?.exercises) return 0;
@@ -453,6 +311,21 @@ const App: React.FC = () => {
   }, [selectedLesson, progress]);
 
   const progressPercent = totalTasks > 0 ? Math.round(((currentGlobalIdx + 1) / totalTasks) * 100) : 0;
+
+  if (authLoading || lessonsLoading) {
+    return (
+      <div className="min-h-screen bg-slate-50 flex items-center justify-center">
+        <div className="flex flex-col items-center">
+          <div className="w-12 h-12 border-4 border-blue-600 border-t-transparent rounded-full animate-spin mb-4"></div>
+          <p className="text-slate-500 font-medium">Loading your German lessons...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (!user) {
+    return <AuthScreen />;
+  }
 
   return (
     <div className="min-h-screen bg-slate-50 pb-12 font-sans">
@@ -473,35 +346,27 @@ const App: React.FC = () => {
              {saveStatus === 'saving' && (
                <div className="flex items-center space-x-2 text-blue-600 text-xs">
                  <div className="w-3 h-3 border-2 border-blue-600 border-t-transparent rounded-full animate-spin"></div>
-                 <span>Сохранение...</span>
+                 <span>Saving...</span>
                </div>
              )}
              {saveStatus === 'saved' && (
                <div className="flex items-center space-x-2 text-green-600 text-xs">
                  <i className="fa-solid fa-check"></i>
-                 <span>Сохранено</span>
+                 <span>Saved</span>
                </div>
              )}
              {saveStatus === 'error' && (
                <div className="flex items-center space-x-2 text-red-600 text-xs">
                  <i className="fa-solid fa-exclamation-triangle"></i>
-                 <span>Ошибка</span>
+                 <span>Error</span>
                </div>
              )}
              
-             {currentView === 'dashboard' && (
-                <div className="flex space-x-2">
-                  <button onClick={exportLessons} className="p-2 text-slate-500 hover:text-blue-600 transition-colors" title="Экспорт уроков">
-                    <i className="fa-solid fa-file-export"></i>
-                  </button>
-                  <button onClick={() => fileInputRef.current?.click()} className="p-2 text-slate-500 hover:text-blue-600 transition-colors" title="Импорт уроков">
-                    <i className="fa-solid fa-file-import"></i>
-                  </button>
-                  <input type="file" ref={fileInputRef} onChange={importLessons} className="hidden" accept=".json" />
-                </div>
-             )}
              <button onClick={() => setCurrentView('dashboard')} className="text-sm font-medium text-slate-500 hover:text-blue-600 transition-colors">
-               {currentView === 'dashboard' ? '' : 'Главная'}
+               {currentView === 'dashboard' ? '' : 'Dashboard'}
+             </button>
+             <button onClick={signOut} className="text-sm font-medium text-slate-500 hover:text-red-600 transition-colors ml-4" title="Sign Out">
+               <i className="fa-solid fa-sign-out-alt"></i>
              </button>
           </div>
         </div>
@@ -513,6 +378,7 @@ const App: React.FC = () => {
             {/* Глобальный прогресс */}
             <GlobalDashboard 
               lessons={lessons}
+              userStates={allUserStates}
               onSelectLesson={(lessonId) => {
                 const lesson = lessons.find(l => l.lesson_id === lessonId);
                 if (lesson) selectLesson(lesson);
@@ -521,67 +387,50 @@ const App: React.FC = () => {
 
             {/* Список уроков */}
             <div>
-              <h2 className="text-2xl font-bold text-slate-800 mb-4">📚 Все уроки</h2>
-              <div className="flex justify-end gap-2 mb-4">
-                <button 
-                    onClick={restoreDefaults}
-                    className="text-xs font-bold text-blue-400 hover:text-blue-600 uppercase tracking-widest transition-colors"
-                    title="Добавить стандартные уроки (если отсутствуют)"
-                >
-                    Вернуть стандартные
-                </button>
-                <button 
-                    onClick={clearAllData}
-                    className="text-xs font-bold text-red-400 hover:text-red-600 uppercase tracking-widest transition-colors"
-                    title="Удалить ВСЕ уроки и прогресс"
-                >
-                    Очистить всё
-                </button>
-              </div>
+              <h2 className="text-2xl font-bold text-slate-800 mb-4">📚 All Lessons</h2>
             
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                {lessons.map(lesson => (
-                  <LessonCard
-                    key={lesson.lesson_id}
-                    lesson={lesson}
-                    progress={lessonProgress[lesson.lesson_id] || null}
-                    onSelect={selectLesson}
-                    onDelete={deleteLesson}
-                  />
-                ))}
-                <div 
-                  onClick={() => setCurrentView('add-lesson')} 
-                  className="border-2 border-dashed border-slate-300 rounded-3xl p-6 flex flex-col items-center justify-center text-slate-400 hover:bg-white hover:border-blue-400 transition-all cursor-pointer min-h-[160px]"
-                >
-                  <i className="fa-solid fa-plus-circle text-2xl mb-2"></i>
-                  <span className="font-semibold text-sm">Новый урок</span>
-                </div>
+                {lessons.map(lesson => {
+                  const state = allUserStates.find(s => s.lesson_id === lesson.lesson_id);
+                  const progress = state?.progress || null;
+                  const vocabStats = state?.vocabulary_stats || {};
+                  const srState = state?.spaced_repetition || {};
+                  const difficultWords = new Set<string>(state?.difficult_words || []);
+
+                  return (
+                    <LessonCard
+                      key={lesson.lesson_id}
+                      lesson={lesson}
+                      progress={progress}
+                      vocabStats={vocabStats}
+                      srState={srState}
+                      difficultWords={difficultWords}
+                      onSelect={selectLesson}
+                      onDelete={(e) => { e.preventDefault(); alert('Deleting lessons is disabled in this version.'); }}
+                    />
+                  );
+                })}
               </div>
             </div>
           </div>
         )}
 
-        {currentView === 'lesson-overview' && selectedLesson && progress && (
+        {currentView === 'lesson-overview' && selectedLesson && lessonState && progress && (
           <div className="max-w-2xl mx-auto bg-white rounded-3xl p-8 shadow-md border border-slate-100 animate-fade-in">
             <div className="flex justify-between items-center mb-6">
               <h2 className="text-2xl font-bold text-slate-800 flex items-center leading-tight">
                 <i className="fa-solid fa-graduation-cap mr-3 text-blue-600 shrink-0"></i> {selectedLesson.title}
               </h2>
-              <button
-                onClick={() => setShowStatistics(!showStatistics)}
-                className={`px-4 py-2 rounded-xl text-sm font-bold transition-colors ${
-                  showStatistics
-                    ? 'bg-blue-600 text-white'
-                    : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
-                }`}
-                title="Показать/скрыть статистику"
-              >
-                <i className="fa-solid fa-chart-bar mr-2"></i> Статистика
-              </button>
+              {/* Stats button hidden for now */}
             </div>
 
             {showStatistics ? (
-              <StatisticsDashboard lessonId={selectedLesson.lesson_id} vocabulary={selectedLesson.vocabulary} />
+              <StatisticsDashboard 
+                lessonId={selectedLesson.lesson_id} 
+                vocabulary={selectedLesson.vocabulary || []}
+                vocabStats={lessonState.vocabStats}
+                srState={lessonState.srState}
+              />
             ) : (
               <div className="space-y-8">
                 <div className="relative pl-6 border-l-2 border-blue-100">
@@ -641,15 +490,84 @@ const App: React.FC = () => {
           </div>
         )}
 
-        {currentView === 'vocabulary' && selectedLesson && (
-          <VocabularyCard vocabulary={sortBySpacedRepetition(selectedLesson.vocabulary || [], selectedLesson.lesson_id)} onFinish={handleVocabFinish} lessonId={selectedLesson.lesson_id} />
+        {currentView === 'vocabulary' && selectedLesson && lessonState && (
+          <VocabularyCard 
+            vocabulary={stableVocabulary.length > 0 ? stableVocabulary : selectedLesson.vocabulary || []} 
+            difficultWords={new Set(lessonState.difficultWords)}
+            onFinish={handleVocabFinish} 
+            onRecordView={(word, translation, timeSpent) => {
+              setLessonState(prev => {
+                if (!prev) return null;
+                const newStats = recordWordView(
+                  prev.vocabStats, 
+                  word, 
+                  translation, 
+                  timeSpent, 
+                  prev.difficultWords.includes(word)
+                );
+                return { ...prev, vocabStats: newStats };
+              });
+            }}
+            onReview={(word, translation, type, isCorrect) => {
+              setLessonState(prev => {
+                if (!prev) return null;
+                // Update SR
+                let newSRState = { ...prev.srState };
+                const isDiff = prev.difficultWords.includes(word);
+                
+                if (isCorrect) {
+                  newSRState = recordSuccessfulReview(newSRState, word, translation, type, isDiff);
+                } else {
+                  newSRState = recordFailedReview(newSRState, word, translation, type);
+                }
+
+                // Update Stats (Exam answer)
+                const newStats = recordExamAnswer(prev.vocabStats, word, isCorrect);
+
+                return { 
+                  ...prev, 
+                  srState: newSRState,
+                  vocabStats: newStats
+                };
+              });
+            }}
+            onToggleDifficulty={(word) => {
+              setLessonState(prev => {
+                if (!prev) return null;
+                const newDiff = toggleDifficultWord(prev.difficultWords, word);
+                return { ...prev, difficultWords: newDiff };
+              });
+            }}
+          />
         )}
 
-        {currentView === 'exam' && selectedLesson && (
+        {currentView === 'exam' && selectedLesson && lessonState && (
           <ExamMode 
             vocabulary={selectedLesson.vocabulary || []}
             lessonId={selectedLesson.lesson_id}
             lesson={selectedLesson}
+            srState={lessonState.srState}
+            difficultWords={new Set(lessonState.difficultWords)}
+            vocabStats={lessonState.vocabStats}
+            onExamAttempt={(word, isCorrect) => {
+              setLessonState(prev => {
+                if (!prev) return null;
+                // Update vocab stats
+                const newStats = recordExamAnswer(prev.vocabStats, word, isCorrect);
+                
+                // Update progress stats (optional, but good for summary)
+                const newProgress = { ...prev.progress };
+                newProgress.statistics = { ...newProgress.statistics };
+                if (isCorrect) newProgress.statistics.correct++;
+                else newProgress.statistics.incorrect++;
+
+                return { 
+                  ...prev, 
+                  vocabStats: newStats,
+                  progress: newProgress
+                };
+              });
+            }}
             onFinish={() => setCurrentView('lesson-overview')}
           />
         )}
@@ -734,6 +652,23 @@ const App: React.FC = () => {
                 currentExerciseIndex={progress.currentExerciseIdx} 
                 currentTaskIndex={progress.currentTaskIdx}
                 onFeedback={onFeedback}
+                onExerciseAttempt={(isCorrect, isFirstAttempt) => {
+                  setLessonState(prev => {
+                    if (!prev) return null;
+                    const newProgress = { ...prev.progress };
+                    newProgress.statistics = { ...newProgress.statistics };
+                    
+                    if (isCorrect) {
+                      newProgress.statistics.correct++;
+                    } else {
+                      newProgress.statistics.incorrect++;
+                    }
+                    
+                    // Note: 'isFirstAttempt' logic could be used for more detailed scoring if needed
+                    
+                    return { ...prev, progress: newProgress };
+                  });
+                }}
               />
             </div>
           </div>
@@ -773,28 +708,7 @@ const App: React.FC = () => {
           </div>
         )}
 
-        {currentView === 'add-lesson' && (
-          <div className="max-w-2xl mx-auto animate-fade-in">
-            <h2 className="text-2xl font-bold mb-2">Добавить урок</h2>
-            <p className="text-sm text-slate-500 mb-6">
-              Вставьте JSON-код урока. Приложение автоматически извлечёт данные даже если есть лишний текст.
-            </p>
-            <textarea 
-              value={jsonInput} 
-              onChange={e => setJsonInput(e.target.value)} 
-              className="w-full h-80 bg-white border border-slate-200 rounded-3xl p-6 font-mono text-xs mb-6 outline-none focus:ring-2 focus:ring-blue-500 shadow-inner"
-              placeholder='{ "lesson_id": "1", "title": "...", "vocabulary": [...], "exercises": [...], "answers": [...] }'
-            />
-            <div className="flex space-x-4">
-               <button onClick={() => setCurrentView('dashboard')} className="flex-1 py-3 bg-slate-200 rounded-xl font-bold hover:bg-slate-300 transition-colors">
-                 Отмена
-               </button>
-               <button onClick={handleAddLesson} className="flex-2 px-10 py-3 bg-blue-600 text-white rounded-xl font-bold shadow-lg shadow-blue-100 hover:bg-blue-700 transition-colors">
-                 Сохранить
-               </button>
-            </div>
-          </div>
-        )}
+
       </main>
 
       <style>{`
