@@ -1,0 +1,300 @@
+{
+  "project": {
+    "name": "DeutschMeister",
+    "description": "AI-powered German learning app with interactive lessons, vocabulary training, and AI tutor feedback",
+    "version": "1.0.0",
+    "type": "react-typescript-vite",
+    "language": "TypeScript",
+    "status": "active development"
+  },
+
+  "context": {
+    "overview": "See .claude/context.md for full project context",
+    "mainFiles": [
+      "App.tsx",
+      "types.ts",
+      "constants.ts",
+      "components/",
+      "services/"
+    ],
+    "documentation": [
+      ".claude/README.md",
+      ".claude/context.md",
+      ".claude/instructions.md",
+      "DEV_GUIDE.md",
+      "ARCHITECTURE.md"
+    ]
+  },
+
+  "codeStyle": {
+    "language": "TypeScript",
+    "strictMode": true,
+    "componentType": "functional",
+    "hooks": true,
+    "cssFramework": "tailwind",
+    "formatting": {
+      "semicolons": true,
+      "quotes": "single",
+      "trailingComma": "es5",
+      "tabWidth": 2,
+      "maxLineLength": 100
+    }
+  },
+
+  "requirements": {
+    "typescript": {
+      "enabled": true,
+      "rule": "STRICT - No 'any' type allowed",
+      "description": "All variables, props, returns must be typed"
+    },
+    "components": {
+      "type": "functional",
+      "hooks": true,
+      "classComponents": false,
+      "description": "Use React Hooks (useState, useEffect, useMemo, useCallback)"
+    },
+    "storage": {
+      "system": "localStorage",
+      "required": true,
+      "rule": "MANDATORY - All state changes must be persisted",
+      "description": "Save all user data to localStorage to prevent data loss"
+    },
+    "api": {
+      "localValidationFirst": true,
+      "description": "Always validate locally before calling Gemini API to save quota",
+      "errorHandling": "try-catch with 429 and RESOURCE_EXHAUSTED handling"
+    },
+    "ai": {
+      "model": "gemini-2.0-flash",
+      "systemPrompt": "See constants.ts and .claude/system-prompts/",
+      "chatHistoryLimit": 3,
+      "rule": "CRITICAL - Brief responses for correct answers (max 5-7 words)"
+    },
+    "styling": {
+      "framework": "Tailwind CSS 4",
+      "inlineStyles": false,
+      "customCSS": false,
+      "description": "Use only Tailwind utility classes"
+    }
+  },
+
+  "criticalRules": [
+    {
+      "id": "BRIEF_CORRECT_ANSWERS",
+      "priority": "CRITICAL",
+      "rule": "When answer is correct, respond BRIEFLY (1-5 words max)",
+      "examples": [
+        "✅ Верно!",
+        "✅ Правильно! Хороший порядок.",
+        "✅ Отлично!"
+      ],
+      "antiPattern": "Long explanations for correct answers"
+    },
+    {
+      "id": "TYPE_SAFETY",
+      "priority": "CRITICAL",
+      "rule": "Always use TypeScript types - NO 'any'",
+      "examples": [
+        "const MyComponent: React.FC<MyProps> = (...) => {...}",
+        "interface MyType { prop: string }"
+      ],
+      "antiPattern": "const data: any = ..."
+    },
+    {
+      "id": "LOCALSTORAGE_PERSISTENCE",
+      "priority": "CRITICAL",
+      "rule": "All state changes must be saved to localStorage",
+      "examples": [
+        "useEffect(() => { localStorage.setItem(key, JSON.stringify(data)) }, [data])"
+      ],
+      "antiPattern": "setState without localStorage"
+    },
+    {
+      "id": "API_OPTIMIZATION",
+      "priority": "HIGH",
+      "rule": "Use local validation before API calls",
+      "examples": [
+        "const validation = validateAnswer(userAnswer, correct)",
+        "if (validation && !validation.shouldCallAPI) return validation"
+      ],
+      "antiPattern": "Direct API calls without validation"
+    },
+    {
+      "id": "ERROR_HANDLING",
+      "priority": "HIGH",
+      "rule": "All API calls must have try-catch with error handling",
+      "examples": [
+        "catch (error) { if (error.includes('429')) { ... } }"
+      ],
+      "antiPattern": "API calls without error handling"
+    },
+    {
+      "id": "FUNCTIONAL_COMPONENTS",
+      "priority": "HIGH",
+      "rule": "Use functional components with Hooks only",
+      "examples": [
+        "const Component: React.FC = () => { useEffect(...) }"
+      ],
+      "antiPattern": "class Component extends React.Component"
+    }
+  ],
+
+  "technologies": {
+    "frontend": {
+      "React": "19.2.3",
+      "TypeScript": "5.8.2",
+      "Vite": "6.2.0",
+      "Tailwind CSS": "4.1.18",
+      "Font Awesome": "6.x"
+    },
+    "ai": {
+      "Google Gemini API": "v2.0-flash",
+      "@google/genai": "1.34.0"
+    },
+    "storage": {
+      "Browser LocalStorage": "5-10MB quota"
+    },
+    "build": {
+      "package.json": "npm",
+      "vite.config.ts": "build configuration",
+      "tsconfig.json": "TypeScript configuration",
+      "tailwind.config.js": "Tailwind configuration"
+    }
+  },
+
+  "apiLimits": {
+    "model": "gemini-2.0-flash",
+    "requestsPerMinute": 60,
+    "requestsPerDay": 1500,
+    "strategy": "Use local validation to minimize API calls",
+    "tracking": "Use tokenTracker.ts to count requests"
+  },
+
+  "commands": {
+    "install": "npm install",
+    "dev": "npm run dev",
+    "build": "npm run build",
+    "preview": "npm run preview",
+    "devServer": "http://localhost:5173"
+  },
+
+  "fileStructure": {
+    ".claude": "Claude context and instructions (NEW)",
+    "App.tsx": "Main component, state management",
+    "constants.ts": "SYSTEM_PROMPT, initial data",
+    "types.ts": "TypeScript interfaces",
+    "index.tsx": "React DOM entry point",
+    ".env": "API_KEY=your_gemini_key",
+    "components/": "React components",
+    "services/": "Business logic services",
+    "lessons.json": "Lesson data",
+    "vite.config.ts": "Vite configuration",
+    "tailwind.config.js": "Tailwind configuration",
+    "tsconfig.json": "TypeScript configuration",
+    "package.json": "Dependencies"
+  },
+
+  "localStorageKeys": {
+    "german_lessons_v1": "All lessons (Lesson[])",
+    "lesson_{lessonId}_progress": "Progress per lesson (LessonProgress)",
+    "vocabulary_stats_{lessonId}": "Vocabulary statistics (VocabStats[])",
+    "spaced_repetition_{lessonId}": "SM-2 algorithm data (SpacedRepetitionData[])",
+    "difficult_words_{lessonId}": "Difficult words (string[])",
+    "api_requests_count": "API request counter ({count, date})"
+  },
+
+  "dataModels": {
+    "Vocabulary": {
+      "word": "string (e.g., 'das Haus')",
+      "translation": "string (e.g., 'дом')",
+      "type": "WordType (noun, verb, adjective, ...)",
+      "example": "string (optional)"
+    },
+    "Exercise": {
+      "title": "string",
+      "tasks": "string[]"
+    },
+    "Answer": {
+      "exercise": "number (1-indexed)",
+      "solutions": "string[] (correct answers)"
+    },
+    "Lesson": {
+      "lesson_id": "string",
+      "title": "string",
+      "vocabulary": "Vocabulary[]",
+      "exercises": "Exercise[]",
+      "answers": "Answer[]"
+    },
+    "LessonProgress": {
+      "vocabSkipped": "boolean",
+      "vocabCompleted": "boolean",
+      "currentExerciseIdx": "number",
+      "currentTaskIdx": "number",
+      "statistics": "LessonStatistics",
+      "completed": "boolean",
+      "lastActivityAt": "ISO date string"
+    }
+  },
+
+  "services": {
+    "geminiService": "Google Gemini API integration",
+    "validationService": "Local answer validation (no API)",
+    "spacedRepetition": "SM-2 algorithm for spaced repetition",
+    "difficultyTracker": "Track difficult words",
+    "tokenTracker": "Count API requests",
+    "vocabularyStatistics": "Track word statistics"
+  },
+
+  "components": {
+    "App.tsx": "Main app container, state management",
+    "VocabularyCard.tsx": "Vocabulary learning and testing",
+    "TutorChat.tsx": "AI tutor for exercise feedback",
+    "ExamMode.tsx": "Exam mode without AI help",
+    "StatisticsDashboard.tsx": "Per-lesson statistics",
+    "GlobalDashboard.tsx": "Overall statistics",
+    "LessonCard.tsx": "Lesson card display",
+    "TokenIndicator.tsx": "API request limit indicator"
+  },
+
+  "aiTutor": {
+    "systemPrompt": "See constants.ts SYSTEM_PROMPT and .claude/system-prompts/main-tutor-prompt.md",
+    "language": "Russian (interface) with German (learning content)",
+    "style": "Friendly, patient, encouraging tutor",
+    "rules": {
+      "correctAnswer": "Brief: '✅ Верно!' (max 5-7 words including explanation)",
+      "partialAnswer": "Explain briefly, give hint, ask to retry",
+      "incorrectAnswer": "Explain error, give example from vocabulary, suggest correction",
+      "examples": "Always from current lesson vocabulary",
+      "terminology": "Use Russian equivalents with explanations"
+    }
+  },
+
+  "patterns": {
+    "see": ".claude/patterns/ for detailed patterns",
+    "components": "Functional components with TypeScript props",
+    "state": "useState for component state, localStorage for persistence",
+    "effects": "useEffect for side effects and localStorage sync",
+    "memoization": "useMemo for expensive calculations, useCallback for props functions",
+    "errorHandling": "try-catch with specific error detection",
+    "naming": "handle* for handlers, get* for data, record* for tracking, validate* for checks"
+  },
+
+  "todo": {
+    "current": "Organizing project with .claude/ structure",
+    "next": [
+      "Create skills/ subfolder with tutor skills",
+      "Create system-prompts/ with detailed prompts",
+      "Create services-config/ with service configurations",
+      "Create patterns/ with code patterns",
+      "Migrate all documentation into .claude/"
+    ]
+  },
+
+  "notes": {
+    "date": "2025-01-25",
+    "version": "1.0.0",
+    "status": "Active Development",
+    "maintainer": "Claude + Developer",
+    "lastUpdate": "Initial setup of .claude/ structure"
+  }
+}

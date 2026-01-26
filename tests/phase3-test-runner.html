@@ -1,0 +1,871 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Phase 3 Test Runner - Deutsch YouTube AI Tutor</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .header {
+            background: white;
+            border-radius: 12px;
+            padding: 30px;
+            margin-bottom: 30px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+        }
+
+        .header h1 {
+            color: #333;
+            margin-bottom: 10px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            font-size: 28px;
+        }
+
+        .header p {
+            color: #666;
+            font-size: 14px;
+        }
+
+        .header-emoji {
+            font-size: 32px;
+        }
+
+        .summary-card {
+            background: white;
+            border-radius: 12px;
+            padding: 30px;
+            margin-bottom: 30px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+        }
+
+        .summary-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+            margin-bottom: 20px;
+        }
+
+        .stat-box {
+            background: linear-gradient(135deg, #f5f7fa 0%, #f0f2f5 100%);
+            padding: 20px;
+            border-radius: 10px;
+            text-align: center;
+            border-left: 4px solid #667eea;
+        }
+
+        .stat-box.passed {
+            border-left-color: #10b981;
+        }
+
+        .stat-box.failed {
+            border-left-color: #ef4444;
+        }
+
+        .stat-value {
+            font-size: 32px;
+            font-weight: bold;
+            color: #667eea;
+            margin-bottom: 5px;
+        }
+
+        .stat-box.passed .stat-value {
+            color: #10b981;
+        }
+
+        .stat-box.failed .stat-value {
+            color: #ef4444;
+        }
+
+        .stat-label {
+            font-size: 14px;
+            color: #666;
+            font-weight: 500;
+        }
+
+        .progress-bar {
+            width: 100%;
+            height: 8px;
+            background: #e5e7eb;
+            border-radius: 4px;
+            overflow: hidden;
+            margin-top: 15px;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #10b981 0%, #059669 100%);
+            transition: width 0.3s ease;
+        }
+
+        .controls {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+
+        .btn {
+            padding: 12px 24px;
+            border: none;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(102, 126, 234, 0.3);
+        }
+
+        .btn-primary:active {
+            transform: translateY(0);
+        }
+
+        .btn-secondary {
+            background: white;
+            color: #667eea;
+            border: 2px solid #667eea;
+        }
+
+        .btn-secondary:hover {
+            background: #f9fafb;
+        }
+
+        .tests-container {
+            background: white;
+            border-radius: 12px;
+            padding: 30px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+        }
+
+        .test-suite {
+            margin-bottom: 25px;
+        }
+
+        .suite-title {
+            font-size: 16px;
+            font-weight: 700;
+            color: #333;
+            margin-bottom: 12px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid #f0f2f5;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .suite-emoji {
+            font-size: 18px;
+        }
+
+        .test-item {
+            display: flex;
+            align-items: flex-start;
+            padding: 12px 15px;
+            margin-bottom: 8px;
+            background: #f9fafb;
+            border-radius: 8px;
+            border-left: 3px solid #f0f2f5;
+            transition: all 0.2s ease;
+        }
+
+        .test-item:hover {
+            background: #f3f4f6;
+            border-left-color: #667eea;
+        }
+
+        .test-item.pass {
+            border-left-color: #10b981;
+            background: #f0fdf4;
+        }
+
+        .test-item.fail {
+            border-left-color: #ef4444;
+            background: #fef2f2;
+        }
+
+        .test-status {
+            font-size: 18px;
+            margin-right: 12px;
+            flex-shrink: 0;
+            width: 24px;
+            text-align: center;
+        }
+
+        .test-content {
+            flex: 1;
+        }
+
+        .test-name {
+            font-size: 14px;
+            color: #333;
+            font-weight: 500;
+            margin-bottom: 4px;
+        }
+
+        .test-error {
+            font-size: 12px;
+            color: #ef4444;
+            font-family: 'Monaco', 'Courier New', monospace;
+            margin-top: 6px;
+            padding: 8px;
+            background: white;
+            border-radius: 4px;
+            border: 1px solid #fecaca;
+        }
+
+        .loading {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            padding: 40px;
+            color: #667eea;
+            font-weight: 600;
+        }
+
+        .spinner {
+            width: 20px;
+            height: 20px;
+            border: 3px solid #e5e7eb;
+            border-top-color: #667eea;
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        .footer {
+            margin-top: 30px;
+            text-align: center;
+            color: rgba(255, 255, 255, 0.8);
+            font-size: 12px;
+        }
+
+        .status-badge {
+            display: inline-block;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 11px;
+            font-weight: 600;
+            margin-top: 4px;
+        }
+
+        .status-badge.pass {
+            background: #d1fae5;
+            color: #065f46;
+        }
+
+        .status-badge.fail {
+            background: #fee2e2;
+            color: #7f1d1d;
+        }
+
+        @media (max-width: 768px) {
+            .header h1 {
+                font-size: 22px;
+            }
+
+            .summary-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+
+            .tests-container {
+                padding: 20px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Header -->
+        <div class="header">
+            <h1>
+                <span class="header-emoji">🧪</span>
+                Phase 3 Test Runner
+            </h1>
+            <p>Automated test suite for progressService integration</p>
+        </div>
+
+        <!-- Summary Card -->
+        <div class="summary-card">
+            <div id="loading" class="loading">
+                <div class="spinner"></div>
+                <span>Running tests...</span>
+            </div>
+
+            <div id="summary" style="display: none;">
+                <div class="summary-grid">
+                    <div class="stat-box">
+                        <div class="stat-value" id="totalTests">0</div>
+                        <div class="stat-label">Total Tests</div>
+                    </div>
+                    <div class="stat-box passed">
+                        <div class="stat-value" id="passedTests">0</div>
+                        <div class="stat-label">✅ Passed</div>
+                    </div>
+                    <div class="stat-box failed">
+                        <div class="stat-value" id="failedTests">0</div>
+                        <div class="stat-label">❌ Failed</div>
+                    </div>
+                    <div class="stat-box">
+                        <div class="stat-value" id="successRate">0%</div>
+                        <div class="stat-label">Success Rate</div>
+                    </div>
+                </div>
+
+                <div class="progress-bar">
+                    <div class="progress-fill" id="progressFill" style="width: 0%"></div>
+                </div>
+
+                <div class="controls">
+                    <button class="btn btn-primary" onclick="location.reload()">
+                        🔄 Run Tests Again
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Tests Container -->
+        <div class="tests-container">
+            <div id="tests"></div>
+        </div>
+
+        <!-- Footer -->
+        <div class="footer">
+            <p>🎓 Deutsch YouTube AI Tutor | Progress Tracking System</p>
+        </div>
+    </div>
+
+    <script>
+        // ============================================
+        // MOCK LOCALSTORAGE FOR BROWSER
+        // ============================================
+        if (!window.localStorage) {
+            window.localStorage = {
+                data: {},
+                getItem(key) {
+                    return this.data[key] || null;
+                },
+                setItem(key, value) {
+                    this.data[key] = value;
+                },
+                removeItem(key) {
+                    delete this.data[key];
+                },
+                clear() {
+                    this.data = {};
+                }
+            };
+        }
+
+        // ============================================
+        // PROGRESS SERVICE FUNCTIONS
+        // ============================================
+        const STORAGE_KEY = 'userProgress';
+
+        function getCurrentWeekStart() {
+            const today = new Date();
+            const day = today.getDay();
+            const diff = today.getDate() - day + (day === 0 ? -6 : 1);
+            const monday = new Date(today.setDate(diff));
+            return monday.toISOString().split('T')[0];
+        }
+
+        function getProgress() {
+            const stored = localStorage.getItem(STORAGE_KEY);
+            if (!stored) {
+                return initializeProgress();
+            }
+            return JSON.parse(stored);
+        }
+
+        function saveProgress(progress) {
+            progress.lastUpdated = Date.now();
+            localStorage.setItem(STORAGE_KEY, JSON.stringify(progress));
+        }
+
+        function initializeProgress() {
+            return {
+                stats: {
+                    totalWordsLearned: 0,
+                    wordsLearnedThisWeek: 0,
+                    totalExerciseAttempts: 0,
+                    exerciseAttemptsCorrect: 0,
+                    lessonsInProgress: 0,
+                    lessonsCompleted: 0,
+                },
+                lessons: {},
+                weeklyStats: {},
+                lastUpdated: Date.now(),
+            };
+        }
+
+        function initializeLessonProgress(lesson) {
+            const progress = getProgress();
+            
+            if (!progress.lessons[lesson.lesson_id]) {
+                const vocabulary = {};
+                (lesson.vocabulary || []).forEach((vocab, idx) => {
+                    vocabulary[`word_${idx}`] = {
+                        word: vocab.word,
+                        translation: vocab.translation,
+                        attempts: 0,
+                        correctAttempts: 0,
+                        examPassed: false,
+                        examPassedAt: null,
+                        lastAttemptAt: 0,
+                    };
+                });
+
+                const exercises = {};
+                (lesson.exercises || []).forEach((exercise) => {
+                    exercise.tasks.forEach((task, idx) => {
+                        const sentenceId = `exercise_${exercise.title.replace(/\s+/g, '_')}_task_${idx}`;
+                        exercises[sentenceId] = {
+                            sentence: task,
+                            translation: '',
+                            attempts: 0,
+                            correctAttempts: 0,
+                            firstAttemptCorrect: false,
+                            correctAt: null,
+                            isLearned: false,
+                            lastAttemptAt: 0,
+                        };
+                    });
+                });
+
+                progress.lessons[lesson.lesson_id] = {
+                    status: 'not_started',
+                    startedAt: Date.now(),
+                    vocabulary,
+                    exercises,
+                    metrics: {
+                        totalWords: Object.keys(vocabulary).length,
+                        wordsLearned: 0,
+                        totalExercises: Object.keys(exercises).length,
+                        exercisesLearned: 0,
+                        exerciseAccuracy: 0,
+                    },
+                    completedAt: null,
+                };
+
+                progress.stats.lessonsInProgress++;
+                saveProgress(progress);
+            }
+        }
+
+        function recordWordExamAttempt(lessonId, wordId, passed) {
+            const progress = getProgress();
+            const lesson = progress.lessons[lessonId];
+            if (!lesson) return;
+
+            const word = lesson.vocabulary[wordId];
+            if (!word) return;
+
+            word.attempts++;
+            word.lastAttemptAt = Date.now();
+
+            if (passed) {
+                word.correctAttempts++;
+                if (!word.examPassed) {
+                    word.examPassed = true;
+                    word.examPassedAt = Date.now();
+
+                    lesson.metrics.wordsLearned++;
+                    
+                    const weekStart = getCurrentWeekStart();
+                    if (!progress.weeklyStats[weekStart]) {
+                        progress.weeklyStats[weekStart] = {
+                            wordsLearned: 0,
+                            exerciseAttempts: 0,
+                            correctAttempts: 0,
+                        };
+                    }
+                    progress.weeklyStats[weekStart].wordsLearned++;
+
+                    progress.stats.totalWordsLearned++;
+                    progress.stats.wordsLearnedThisWeek++;
+                }
+            }
+
+            saveProgress(progress);
+        }
+
+        function recordExerciseAttempt(lessonId, exerciseId, isCorrect, isFirstAttempt) {
+            const progress = getProgress();
+            const lesson = progress.lessons[lessonId];
+            if (!lesson) return;
+
+            const exercise = lesson.exercises[exerciseId];
+            if (!exercise) return;
+
+            exercise.attempts++;
+            exercise.lastAttemptAt = Date.now();
+
+            progress.stats.totalExerciseAttempts++;
+            
+            const weekStart = getCurrentWeekStart();
+            if (!progress.weeklyStats[weekStart]) {
+                progress.weeklyStats[weekStart] = {
+                    wordsLearned: 0,
+                    exerciseAttempts: 0,
+                    correctAttempts: 0,
+                };
+            }
+            progress.weeklyStats[weekStart].exerciseAttempts++;
+
+            if (isFirstAttempt && isCorrect) {
+                exercise.firstAttemptCorrect = true;
+                exercise.correctAt = Date.now();
+                exercise.isLearned = true;
+
+                lesson.metrics.exercisesLearned++;
+                progress.stats.exerciseAttemptsCorrect++;
+                progress.weeklyStats[weekStart].correctAttempts++;
+            }
+
+            if (isCorrect) {
+                exercise.correctAttempts++;
+            }
+
+            if (lesson.metrics.totalExercises > 0) {
+                lesson.metrics.exerciseAccuracy = Math.round(
+                    (lesson.metrics.exercisesLearned / lesson.metrics.totalExercises) * 100
+                );
+            }
+
+            saveProgress(progress);
+        }
+
+        function getDashboardStats() {
+            return getProgress().stats;
+        }
+
+        function getLessonMetrics(lessonId) {
+            const progress = getProgress();
+            return progress.lessons[lessonId]?.metrics || null;
+        }
+
+        function getLessonData(lessonId) {
+            const progress = getProgress();
+            return progress.lessons[lessonId] || null;
+        }
+
+        // ============================================
+        // TEST RUNNER CLASS
+        // ============================================
+        class TestRunner {
+            constructor() {
+                this.tests = [];
+                this.suites = [];
+                this.currentSuite = null;
+                this.passed = 0;
+                this.failed = 0;
+                this.results = [];
+            }
+
+            describe(name, fn) {
+                this.currentSuite = {
+                    name,
+                    emoji: '📋',
+                    tests: []
+                };
+                fn();
+                this.suites.push(this.currentSuite);
+            }
+
+            test(name, fn) {
+                try {
+                    fn();
+                    this.passed++;
+                    const result = { name, status: 'PASS', error: null };
+                    this.results.push(result);
+                    if (this.currentSuite) {
+                        this.currentSuite.tests.push(result);
+                    }
+                } catch (error) {
+                    this.failed++;
+                    const result = { name, status: 'FAIL', error: error.message };
+                    this.results.push(result);
+                    if (this.currentSuite) {
+                        this.currentSuite.tests.push(result);
+                    }
+                }
+            }
+
+            assertEquals(actual, expected, message) {
+                if (actual !== expected) {
+                    throw new Error(`${message} - Expected ${expected}, got ${actual}`);
+                }
+            }
+
+            assertTrue(value, message) {
+                if (!value) {
+                    throw new Error(message);
+                }
+            }
+
+            assertExists(value, message) {
+                if (!value) {
+                    throw new Error(message);
+                }
+            }
+
+            getSummary() {
+                const total = this.passed + this.failed;
+                const successRate = total > 0 ? Math.round((this.passed / total) * 100) : 0;
+                return {
+                    total,
+                    passed: this.passed,
+                    failed: this.failed,
+                    successRate,
+                    suites: this.suites
+                };
+            }
+        }
+
+        // ============================================
+        // MOCK LESSON DATA
+        // ============================================
+        const mockLesson = {
+            lesson_id: 'lesson_1',
+            title: 'Test Lesson',
+            vocabulary: [
+                { word: 'Haus', translation: 'House', type: 'noun' },
+                { word: 'Tisch', translation: 'Table', type: 'noun' },
+                { word: 'Stuhl', translation: 'Chair', type: 'noun' },
+            ],
+            exercises: [
+                {
+                    title: 'Satz1',
+                    tasks: ['Das ist ein Haus', 'Das ist ein Tisch'],
+                },
+                {
+                    title: 'Satz2',
+                    tasks: ['Das ist ein Stuhl'],
+                },
+            ],
+            answers: [
+                {
+                    exercise: 1,
+                    solutions: ['This is a house', 'This is a table'],
+                },
+                {
+                    exercise: 2,
+                    solutions: ['This is a chair'],
+                },
+            ],
+        };
+
+        // ============================================
+        // DEFINE ALL TESTS
+        // ============================================
+        const runner = new TestRunner();
+
+        // TEST SUITE 1: INITIALIZATION
+        runner.describe('TEST SUITE 1: Initialization', () => {
+            runner.test('Clear localStorage before tests', () => {
+                localStorage.clear();
+                runner.assertTrue(localStorage.getItem(STORAGE_KEY) === null, 'Storage should be empty');
+            });
+
+            runner.test('Initialize lesson progress', () => {
+                initializeLessonProgress(mockLesson);
+                const progress = getProgress();
+                runner.assertExists(progress.lessons[mockLesson.lesson_id], 'Lesson should be initialized');
+            });
+
+            runner.test('Lesson has correct vocabulary count', () => {
+                const progress = getProgress();
+                const lesson = progress.lessons[mockLesson.lesson_id];
+                runner.assertEquals(Object.keys(lesson.vocabulary).length, 3, 'Should have 3 words');
+            });
+
+            runner.test('Lesson has correct exercise count', () => {
+                const progress = getProgress();
+                const lesson = progress.lessons[mockLesson.lesson_id];
+                runner.assertEquals(Object.keys(lesson.exercises).length, 3, 'Should have 3 exercises');
+            });
+
+            runner.test('Lesson status is "not_started"', () => {
+                const progress = getProgress();
+                const lesson = progress.lessons[mockLesson.lesson_id];
+                runner.assertEquals(lesson.status, 'not_started', 'Status should be not_started');
+            });
+
+            runner.test('Dashboard stats show lesson in progress', () => {
+                const stats = getDashboardStats();
+                runner.assertEquals(stats.lessonsInProgress, 1, 'Should have 1 lesson in progress');
+            });
+        });
+
+        // TEST SUITE 2: WORD TRACKING
+        runner.describe('TEST SUITE 2: Word Exam Attempt Tracking', () => {
+            runner.test('Record correct word attempt', () => {
+                recordWordExamAttempt(mockLesson.lesson_id, 'word_0', true);
+                const progress = getProgress();
+                const word = progress.lessons[mockLesson.lesson_id].vocabulary.word_0;
+                runner.assertTrue(word.examPassed, 'Word should be marked as passed');
+                runner.assertEquals(word.attempts, 1, 'Attempts count should be 1');
+                runner.assertEquals(word.correctAttempts, 1, 'Correct attempts should be 1');
+            });
+
+            runner.test('Record incorrect word attempt', () => {
+                recordWordExamAttempt(mockLesson.lesson_id, 'word_1', false);
+                const progress = getProgress();
+                const word = progress.lessons[mockLesson.lesson_id].vocabulary.word_1;
+                runner.assertTrue(!word.examPassed, 'Word should not be marked as passed');
+                runner.assertEquals(word.attempts, 1, 'Attempts count should be 1');
+                runner.assertEquals(word.correctAttempts, 0, 'Correct attempts should be 0');
+            });
+
+            runner.test('Words learned count updated', () => {
+                const progress = getProgress();
+                const lesson = progress.lessons[mockLesson.lesson_id];
+                runner.assertEquals(lesson.metrics.wordsLearned, 1, 'Should have 1 word learned');
+            });
+
+            runner.test('Dashboard stats updated with words learned', () => {
+                const stats = getDashboardStats();
+                runner.assertEquals(stats.totalWordsLearned, 1, 'Total words learned should be 1');
+                runner.assertEquals(stats.wordsLearnedThisWeek, 1, 'Words learned this week should be 1');
+            });
+
+            runner.test('Word ID format is correct', () => {
+                const progress = getProgress();
+                const lesson = progress.lessons[mockLesson.lesson_id];
+                const wordIds = Object.keys(lesson.vocabulary);
+                runner.assertTrue(wordIds.includes('word_0'), 'Should have word_0');
+                runner.assertTrue(wordIds.includes('word_1'), 'Should have word_1');
+                runner.assertTrue(wordIds.includes('word_2'), 'Should have word_2');
+            });
+        });
+
+        // TEST SUITE 3: EXERCISE TRACKING
+        runner.describe('TEST SUITE 3: Exercise Attempt Tracking', () => {
+            runner.test('Record exercise attempt - correct on first try', () => {
+                recordExerciseAttempt(mockLesson.lesson_id, 'exercise_Satz1_task_0', true, true);
+                const progress = getProgress();
+                const exercise = progress.lessons[mockLesson.lesson_id].exercises['exercise_Satz1_task_0'];
+                runner.assertTrue(exercise.firstAttemptCorrect, 'Should be marked as first attempt correct');
+                runner.assertTrue(exercise.isLearned, 'Should be marked as learned');
+                runner.assertEquals(exercise.attempts, 1, 'Attempts should be 1');
+            });
+
+            runner.test('Record exercise attempt - incorrect on first try', () => {
+                recordExerciseAttempt(mockLesson.lesson_id, 'exercise_Satz1_task_1', false, true);
+                const progress = getProgress();
+                const exercise = progress.lessons[mockLesson.lesson_id].exercises['exercise_Satz1_task_1'];
+                runner.assertTrue(!exercise.firstAttemptCorrect, 'Should not be marked as first attempt correct');
+                runner.assertTrue(!exercise.isLearned, 'Should not be marked as learned');
+                runner.assertEquals(exercise.attempts, 1, 'Attempts should be 1');
+            });
+
+            runner.test('Record exercise attempt - correct on second try', () => {
+                recordExerciseAttempt(mockLesson.lesson_id, 'exercise_Satz1_task_1', true, false);
+                const progress = getProgress();
+                const exercise = progress.lessons[mockLesson.lesson_id].exercises['exercise_Satz1_task_1'];
+                runner.assertTrue(!exercise.firstAttemptCorrect, 'Should still not be first attempt correct');
+                runner.assertTrue(!exercise.isLearned, 'Should still not be marked as learned');
+                runner.assertEquals(exercise.attempts, 2, 'Attempts should be 2');
+                runner.assertEquals(exercise.correctAttempts, 1, 'Correct attempts should be 1');
+            });
+
+            runner.test('Exercise ID format is correct', () => {
+                const progress = getProgress();
+                const lesson = progress.lessons[mockLesson.lesson_id];
+                const exerciseIds = Object.keys(lesson.exercises);
+                runner.assertTrue(exerciseIds.includes('exercise_Satz1_task_0'), 'Should have exercise_Satz1_task_0');
+                runner.assertTrue(exerciseIds.includes('exercise_Satz1_task_1'), 'Should have exercise_Satz1_task_1');
+                runner.assertTrue(exerciseIds.includes('exercise_Satz2_task_0'), 'Should have exercise_Satz2_task_0');
+            });
+
+            runner.test('Exercise accuracy calculation', () => {
+                const progress = getProgress();
+                const lesson = progress.lessons[mockLesson.lesson_id];
+                runner.assertEquals(lesson.metrics.exerciseAccuracy, 33, 'Accuracy should be 33%');
+            });
+
+            runner.test('Dashboard stats show exercise attempts', () => {
+                const stats = getDashboardStats();
+                runner.assertTrue(stats.totalExerciseAttempts > 0, 'Should have exercise attempts');
+                runner.assertTrue(stats.exerciseAttemptsCorrect > 0, 'Should have correct attempts');
+            });
+        });
+
+        // TEST SUITE 4: DATA PERSISTENCE
+        runner.describe('TEST SUITE 4: Data Persistence', () => {
+            runner.test('Progress survives storage retrieval', () => {
+                const progress1 = getProgress();
+                const stored = localStorage.getItem(STORAGE_KEY);
+                localStorage.clear();
+                localStorage.setItem(STORAGE_KEY, stored);
+                const progress2 = getProgress();
+                runner.assertEquals(
+                    progress2.stats.totalWordsLearned,
+                    progress1.stats.totalWordsLearned,
+                    'Total words learned should persist'
+                );
+            });
+
+            runner.test('Multiple lessons tracked independently', () => {
+                const lesson2 = { ...mockLesson, lesson_id: 'lesson_2', title: 'Test Lesson 2' };
+                initializeLessonProgress(lesson2);
+                const progress = getProgress();
+                runner.assertExists(progress.lessons['lesson_1'], 'Lesson 1 should exist');
+                runner.assertExists(progress.lessons['lesson_2'], 'Lesson 2 should exist');
+            });
+
+            runner.test('Weekly stats tracked correctly', () => {
+                const progress = getProgress();
+                const weekStart = getCurrentWeekStart();
+                runner.assertExists(progress.weeklyStats[weekStart], 'Weekly stats should exist for current week');
+            });
+        });
+
+        // TEST SUITE 5: DASHBOARD STATISTICS
+        runner.describe('TEST SUITE 5: Dashboard Statistics', () => {
+            runner.test('getDashboardStats returns correct stats object', () => {
+                const stats = getDashboardStats();
+                runner.assertExists(stats.totalWordsLearned, 'Should have totalWordsLearned');
+                runner.assertExists(stats.wordsLearnedThisWeek, 'Should have wordsLearnedThisWeek');
+                runner.assertExists(stats.totalExerciseAttempts, 'Should have totalExerciseAttempts');
+                runner.assertExists(stats.exerciseAttemptsCorrect, 'Should have exerciseAttemptsCorrect');
+                runner.assertExists(stats.lessonsInProgress, 'Should have lessonsInProgress');
+                runner.assertExists(stats.lessonsCompleted, 'Should have lessonsCompleted');
+            });
+
+            runner.test('getLessonMetrics returns correct metrics', () => {
+                const metrics = getLessonMetrics(mockLesson.lesson_id);
+                runner.assertExists(metrics, 'Shoul
