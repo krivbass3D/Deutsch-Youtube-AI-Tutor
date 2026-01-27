@@ -65,10 +65,38 @@ export const getLessonMetrics = (
   // Грамматика мастерство (на основе точности упражнений)
   const grammarMastery = exerciseAccuracy;
 
-  // Общий прогресс
-  const overallProgress = Math.round(
-    (srStats.learnedWords / (lesson.vocabulary?.length || 1)) * 100
-  );
+  // ОБЩИЙ ПРОГРЕСС
+  // 1. Прогресс слов (SR)
+  const vocabProgress = lesson.vocabulary?.length 
+    ? srStats.learnedWords / lesson.vocabulary.length 
+    : 0;
+  
+  // 2. Прогресс упражнений (Завершенность)
+  // Считаем общее количество задач в уроке
+  const totalTasks = lesson.exercises?.reduce((acc, ex) => acc + (ex.tasks?.length || 0), 0) || 0;
+  // Считаем сколько задач решено (есть в ответах)
+  const solvedTasksCount = progress?.statistics?.answers 
+    ? Object.keys(progress.statistics.answers).length 
+    : 0;
+  const exerciseProgress = totalTasks > 0 ? solvedTasksCount / totalTasks : 0;
+
+  // Среднее арифметическое (50% слова, 50% упражнения)
+  // Если упражнений нет, то 100% слова
+  let rawProgress = 0;
+  if (totalTasks === 0) {
+    rawProgress = vocabProgress;
+  } else {
+    rawProgress = (vocabProgress + exerciseProgress) / 2;
+  }
+  
+  let overallProgress = Math.round(rawProgress * 100);
+
+  // Если есть хоть какая-то активность (просмотр слов или попытки), но прогресс 0 - ставим 1%,
+  // чтобы карточка не была "серой" (Не начинали)
+  const hasActivity = aggStats.lastStudiedAt || totalAttempts > 0 || Object.keys(vocabStats).length > 0;
+  if (overallProgress === 0 && hasActivity) {
+    overallProgress = 1;
+  }
 
   // Уровень сложности
   let difficultyLevel: 'easy' | 'medium' | 'hard' = 'medium';
@@ -86,7 +114,7 @@ export const getLessonMetrics = (
     averageTimePerWord: avgTimePerWord,
     lastStudiedAt: aggStats.lastStudiedAt || null,
     daysSinceLastStudy,
-    exercisesCompleted: totalAttempts,
+    exercisesCompleted: solvedTasksCount, // Используем уникальные решенные задачи (или totalAttempts если важно количество попыток)
     exerciseAccuracy,
     grammarMastery,
     overallProgress,

@@ -131,6 +131,22 @@ const App: React.FC = () => {
     }
   }, [user]);
 
+  // Refresh global stats when returning to dashboard
+  useEffect(() => {
+    if (currentView === 'dashboard' && user) {
+      const loadGlobalStats = async () => {
+        try {
+          const states = await userStateService.getAllUserLessonStates(user.id);
+          setAllUserStates(states || []);
+        } catch (err) {
+          console.error('Failed to refresh global stats:', err);
+        }
+      };
+      loadGlobalStats();
+    }
+  }, [currentView, user]);
+
+
   // 2. Select Lesson -> Fetch User State
   const selectLesson = async (lesson: Lesson) => {
     setSelectedLesson(lesson);
@@ -376,14 +392,14 @@ const App: React.FC = () => {
         {currentView === 'dashboard' && (
           <div className="animate-fade-in space-y-8">
             {/* Глобальный прогресс */}
-            <GlobalDashboard 
-              lessons={lessons}
-              userStates={allUserStates}
-              onSelectLesson={(lessonId) => {
-                const lesson = lessons.find(l => l.lesson_id === lessonId);
-                if (lesson) selectLesson(lesson);
-              }}
-            />
+              <GlobalDashboard 
+                lessons={lessons}
+                userStates={allUserStates}
+                onSelectLesson={(lessonId) => {
+                  const lesson = lessons.find(l => l.lesson_id.toString() === lessonId.toString());
+                  if (lesson) selectLesson(lesson);
+                }}
+              />
 
             {/* Список уроков */}
             <div>
@@ -391,7 +407,7 @@ const App: React.FC = () => {
             
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                 {lessons.map(lesson => {
-                  const state = allUserStates.find(s => s.lesson_id === lesson.lesson_id);
+                  const state = allUserStates.find(s => s.lesson_id.toString() === lesson.lesson_id.toString());
                   const progress = state?.progress || null;
                   const vocabStats = state?.vocabulary_stats || {};
                   const srState = state?.spaced_repetition || {};
@@ -417,11 +433,34 @@ const App: React.FC = () => {
 
         {currentView === 'lesson-overview' && selectedLesson && lessonState && progress && (
           <div className="max-w-2xl mx-auto bg-white rounded-3xl p-8 shadow-md border border-slate-100 animate-fade-in">
-            <div className="flex justify-between items-center mb-6">
+            {/* Header + Tabs */}
+            <div className="flex flex-col md:flex-row justify-between items-center mb-8 gap-4">
               <h2 className="text-2xl font-bold text-slate-800 flex items-center leading-tight">
                 <i className="fa-solid fa-graduation-cap mr-3 text-blue-600 shrink-0"></i> {selectedLesson.title}
               </h2>
-              {/* Stats button hidden for now */}
+              
+              <div className="flex bg-slate-100 p-1 rounded-xl shrink-0">
+                <button
+                  onClick={() => setShowStatistics(false)}
+                  className={`px-4 py-2 rounded-lg text-sm font-bold transition-all ${
+                    !showStatistics 
+                      ? 'bg-white text-blue-600 shadow-sm' 
+                      : 'text-slate-500 hover:text-slate-700'
+                  }`}
+                >
+                  <i className="fa-solid fa-book-open mr-2"></i> Урок
+                </button>
+                <button
+                  onClick={() => setShowStatistics(true)}
+                  className={`px-4 py-2 rounded-lg text-sm font-bold transition-all ${
+                    showStatistics 
+                      ? 'bg-white text-blue-600 shadow-sm' 
+                      : 'text-slate-500 hover:text-slate-700'
+                  }`}
+                >
+                  <i className="fa-solid fa-chart-pie mr-2"></i> Статистика
+                </button>
+              </div>
             </div>
 
             {showStatistics ? (

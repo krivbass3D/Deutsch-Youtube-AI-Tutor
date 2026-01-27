@@ -2,9 +2,9 @@
 
 > **Главный файл для работы Claude с проектом DeutschMeister**
 
-**Версия:** 1.0.0  
-**Последнее обновление:** 25 января 2026  
-**Статус:** Активно ✅
+**Версия:** 1.1.0  
+**Последнее обновление:** 27 января 2026  
+**Статус:** Supabase Powered ✅
 
 ---
 
@@ -16,7 +16,7 @@
 4. [🧩 Паттерны кодирования](#-паттерны-кодирования)
 5. [🤖 AI-Репетитор](#-ai-репетитор)
 6. [⚡ Оптимизация](#-оптимизация)
-7. [💾 LocalStorage](#-localstorage)
+7. [💾 Supabase DB](#-supabase-db)
 8. [🔧 Расширение функционала](#-расширение-функционала)
 9. [🐛 Отладка и Troubleshooting](#-отладка-и-troubleshooting)
 10. [📞 Как спрашивать](#-как-спрашивать)
@@ -36,11 +36,12 @@ npm run preview      # Предпросмотр сборки
 ```
 
 ### Технологический стек
-- **Frontend:** React 19.2.3 + TypeScript 5.8.2
-- **Bundler:** Vite 6.2.0
-- **Styling:** Tailwind CSS 4.1.18
-- **AI:** Google Gemini 2.0 Flash API
-- **Storage:** Browser LocalStorage
+- **Frontend:** React 19 + TypeScript
+- **Bundler:** Vite 6
+- **Styling:** Tailwind CSS 4
+- **Database/Auth:** Supabase (PostgreSQL)
+- **AI:** Google Gemini 2.0 Flash / OpenAI GPT-4o mini
+- **Storage:** Supabase Table Storage (replacing LocalStorage)
 
 ### Критичные файлы
 ```
@@ -68,20 +69,20 @@ lessons.json         🔵 Данные уроков
     ┌──────┴──────┬─────────────┬──────────────┐
     │             │             │              │
  COMPONENTS   SERVICES      STORAGE         TYPES
- ├─ VocabCard ├─ gemini    ├─ lessons     ├─ Lesson
- ├─ TutorChat ├─ validate  ├─ progress    ├─ Exercise
- ├─ ExamMode  ├─ spaced    ├─ stats       ├─ Vocabulary
- ├─ Statistic ├─ difficulty└─ API count   └─ LessonProgress
- └─ Dashboard └─ tokens
+ ├─ VocabCard ├─ aiService  ├─ Supabase DB ├─ Lesson
+ ├─ TutorChat ├─ lessonSvc  ├─ Auth        ├─ Exercise
+ ├─ Auth      ├─ userState  └─ Realtime    ├─ Vocabulary
+ ├─ Dashboard ├─ validate                  └─ LessonState
+ └─ Stats     └─ spaced/stats  
 ```
 
 ### Поток данных
 
 ```
-1. Загрузка      → App → localStorage → setState
-2. Пользователь → Компонент → Сервис → setState → localStorage
+1. Загрузка      → App → lessonService → Supabase → setState
+2. Пользователь → Компонент → userStateService → Supabase
 3. AI запрос     → validationService (локально) 
-                 → geminiService (API) → setState
+                 → aiService (API) → setState
 ```
 
 ### Жизненный цикл урока

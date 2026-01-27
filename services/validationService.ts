@@ -90,7 +90,7 @@ export function validateAnswer(
   if (userNorm === correctNorm) {
     return {
       isCorrect: true,
-      message: '✅ Верно!',
+      message: '✅ Верно! Отличный порядок слов.',
       shouldCallAPI: false,
     };
   }

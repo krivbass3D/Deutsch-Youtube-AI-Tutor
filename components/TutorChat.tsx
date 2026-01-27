@@ -77,12 +77,25 @@ const TutorChat: React.FC<TutorChatProps> = ({
     try {
       // Получаем правильный ответ из данных урока
       const currentExercise = lesson.exercises[currentExerciseIndex];
-      const correctAnswer = lesson.answers
-        .find(a => a.exercise === (currentExerciseIndex + 1))
-        ?.solutions[currentTaskIndex];
+      
+      // Safety check: ensure answers array exists
+      if (!lesson.answers) {
+        console.warn('⚠️ Lesson answers array is missing!');
+      }
+
+      const correctAnswerObj = lesson.answers?.find(a => a.exercise === (currentExerciseIndex + 1));
+      const correctAnswer = correctAnswerObj?.solutions?.[currentTaskIndex];
+
+      console.log('🔍 Debug Validation:', {
+        userInput: currentInput,
+        expected: correctAnswer,
+        exerciseIndex: currentExerciseIndex,
+        taskIndex: currentTaskIndex,
+        answersAvailable: !!lesson.answers
+      });
 
       // 🚀 Сначала проверяем локально (без API)
-      if (correctAnswer) {
+      if (typeof correctAnswer === 'string') {
         const validationResult = validateAnswer(currentInput, correctAnswer);
         
         if (validationResult && !validationResult.shouldCallAPI) {
@@ -93,6 +106,7 @@ const TutorChat: React.FC<TutorChatProps> = ({
             timestamp: Date.now(),
           };
 
+          setMessages(prev => [...prev, modelMsg]);
           onFeedback(validationResult.isCorrect, currentInput);
           trackLocalValidation(); // 📊 Запись локальной валидации
 
@@ -111,6 +125,8 @@ const TutorChat: React.FC<TutorChatProps> = ({
           setIsLoading(false);
           return;
         }
+      } else {
+        console.warn('⚠️ Correct answer not found locally for this task. Falling back to AI.');
       }
 
       // Если локальная валидация не прошла - вызываем API
