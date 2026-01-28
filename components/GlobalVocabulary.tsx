@@ -159,9 +159,9 @@ const GlobalVocabulary: React.FC<GlobalVocabularyProps> = ({ lessons, userStates
                   <table className="w-full text-left border-collapse">
                     <thead>
                       <tr className="text-[10px] font-black text-slate-400 uppercase tracking-widest">
-                        <th className="px-6 py-3">Слово / Перевод</th>
-                        <th className="px-6 py-3 text-center w-24">Тип</th>
-                        <th className="px-6 py-3 text-right">Прогресс</th>
+                        <th className="px-3 md:px-6 py-3">Слово / Перевод</th>
+                        <th className="px-3 md:px-6 py-3 text-center w-16 md:w-24">Тип</th>
+                        <th className="px-3 md:px-6 py-3 text-right">Прогресс</th>
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-slate-50">
@@ -169,23 +169,23 @@ const GlobalVocabulary: React.FC<GlobalVocabularyProps> = ({ lessons, userStates
                         const isDifficult = allDifficultWords.has(v.word);
                         return (
                           <tr key={idx} className="group hover:bg-slate-50/50 transition-colors">
-                            <td className="px-6 py-4">
-                              <div className="font-bold text-slate-800 flex items-center">
+                            <td className="px-3 md:px-6 py-4">
+                              <div className="font-bold text-slate-800 flex items-center flex-wrap">
                                 {v.word}
                                 {isDifficult && (
                                   <i className="fa-solid fa-star text-amber-400 ml-2 text-[10px]"></i>
                                 )}
                               </div>
-                              <div className="text-sm text-slate-500">{v.translation}</div>
+                              <div className="text-sm text-slate-500 line-clamp-1">{v.translation}</div>
                             </td>
-                            <td className="px-6 py-4 text-center">
-                              <span className="px-2 py-0.5 bg-slate-100 text-[9px] font-black text-slate-500 rounded uppercase tracking-wider">
+                            <td className="px-3 md:px-6 py-4 text-center">
+                              <span className="px-1.5 py-0.5 bg-slate-100 text-[9px] font-black text-slate-500 rounded uppercase tracking-wider">
                                 {v.type}
                               </span>
                             </td>
-                            <td className="px-6 py-4">
+                            <td className="px-3 md:px-6 py-4">
                               <div className="flex justify-end">
-                                <div className="w-24 h-1.5 bg-slate-100 rounded-full overflow-hidden border border-slate-200/50">
+                                <div className="w-12 sm:w-24 h-1.5 bg-slate-100 rounded-full overflow-hidden border border-slate-200/50">
                                   <div 
                                     className="h-full bg-blue-500 transition-all duration-700"
                                     style={{ width: getProgressWidth(v.word) }}

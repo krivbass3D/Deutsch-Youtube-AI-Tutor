@@ -24,6 +24,8 @@ const TutorChat: React.FC<TutorChatProps> = ({
   onExerciseAttempt,
   resetChat 
 }) => {
+  const currentTask = lesson.exercises[currentExerciseIndex]?.tasks[currentTaskIndex];
+  
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [inputValue, setInputValue] = useState('');
   const [isLoading, setIsLoading] = useState(false);
@@ -214,7 +216,7 @@ const TutorChat: React.FC<TutorChatProps> = ({
 
   return (
     <div className="flex flex-col h-[500px] lg:h-[600px] w-full bg-white rounded-3xl shadow-lg border border-slate-200 overflow-hidden">
-      <div className="bg-slate-50 p-4 border-bottom border-slate-100 flex items-center justify-between">
+      <div className="bg-slate-50 p-4 border-b border-slate-100 flex items-center justify-between relative">
         <div className="flex items-center space-x-3">
             <div className="w-10 h-10 rounded-full bg-blue-600 flex items-center justify-center text-white text-lg">
                 <i className="fa-solid fa-user-graduate"></i>
@@ -224,7 +226,23 @@ const TutorChat: React.FC<TutorChatProps> = ({
                 <p className="text-xs text-green-500 font-medium">Онлайн</p>
             </div>
         </div>
+
+        {/* Task Hint - Always visible in the chat header area or just below it */}
+        <div className="absolute right-4 top-1/2 -translate-y-1/2 max-w-[50%] hidden sm:block">
+            <div className="bg-blue-50 border border-blue-100 px-3 py-1 rounded-lg">
+                <p className="text-[10px] font-bold text-blue-400 uppercase leading-none mb-1">Задача:</p>
+                <p className="text-xs font-bold text-blue-700 truncate">{currentTask}</p>
+            </div>
+        </div>
       </div>
+
+      {/* Persistent Task Label for Mobile (visible at the top of scroll area) */}
+      {currentTask && (
+        <div className="sm:hidden bg-blue-50/80 backdrop-blur-sm border-b border-blue-100 px-4 py-2 flex items-center space-x-2 shrink-0">
+          <i className="fa-solid fa-language text-blue-400 text-xs"></i>
+          <p className="text-xs font-bold text-blue-700 italic">«{currentTask}»</p>
+        </div>
+      )}
 
       <div ref={scrollRef} className="flex-1 overflow-y-auto p-4 space-y-4 bg-slate-50/30">
         {messages.length === 0 && (

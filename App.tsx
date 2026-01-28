@@ -104,7 +104,7 @@ const App: React.FC = () => {
     <div className="min-h-screen bg-slate-50 text-slate-900 font-sans selection:bg-blue-100 selection:text-blue-900">
       <Header />
 
-      <main className="max-w-5xl mx-auto px-6 py-10">
+      <main className="max-w-5xl mx-auto px-3 md:px-6 py-4 md:py-10">
         {currentView === 'dashboard' && (
           <DashboardView 
             lessons={lessons} 

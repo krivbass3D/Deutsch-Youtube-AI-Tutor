@@ -211,37 +211,39 @@ const VocabularyCard: React.FC<VocabularyCardProps> = ({
             </div>
           </div>
 
-          <div className="flex items-center space-x-4 w-full">
+          <div className="flex items-center justify-center space-x-3 w-full max-w-sm">
             <button 
               onClick={(e) => { e.stopPropagation(); handlePrev(); }}
               disabled={currentIndex === 0}
-              className="flex-1 py-4 bg-white border border-slate-200 rounded-2xl font-bold text-slate-600 hover:bg-slate-50 disabled:opacity-50 transition-colors"
+              className="w-14 h-14 flex items-center justify-center bg-white border border-slate-200 rounded-2xl text-slate-500 hover:text-blue-600 hover:border-blue-200 disabled:opacity-30 transition-all shadow-sm"
+              title="Назад"
             >
-              <i className="fa-solid fa-arrow-left mr-2"></i> Назад
+              <i className="fa-solid fa-arrow-left text-xl"></i>
             </button>
             <button 
               onClick={(e) => { e.stopPropagation(); handleToggleDifficult(); }}
-              className={`px-4 py-4 rounded-2xl font-bold transition-colors ${
+              className={`w-14 h-14 flex items-center justify-center rounded-2xl text-xl transition-all shadow-sm ${
                 isDifficultWord
-                  ? 'bg-amber-100 text-amber-700 border-2 border-amber-300'
-                  : 'bg-white border border-slate-200 text-slate-600 hover:bg-slate-50'
+                  ? 'bg-amber-100 text-amber-500 border-2 border-amber-300'
+                  : 'bg-white border border-slate-200 text-slate-400 hover:text-amber-400 hover:border-amber-200'
               }`}
               title={isDifficultWord ? 'Удалить из сложных' : 'Отметить как сложное'}
             >
-              ⭐
+              <i className={`${isDifficultWord ? 'fa-solid' : 'fa-regular'} fa-star`}></i>
             </button>
             <button 
               onClick={() => handleSkipPhases()}
-              className="px-4 py-4 bg-slate-100 text-slate-600 rounded-2xl font-bold hover:bg-slate-200 transition-colors"
-              title="Пропустить обучение и перейти к проверке"
+              className="w-14 h-14 flex items-center justify-center bg-slate-100 text-slate-500 rounded-2xl hover:bg-slate-200 transition-all shadow-sm"
+              title="Перейти к проверке"
             >
-              <i className="fa-solid fa-forward mr-2"></i> Проверка
+              <i className="fa-solid fa-vial text-xl"></i>
             </button>
             <button 
               onClick={(e) => { e.stopPropagation(); handleNext(); }}
-              className="flex-1 py-4 bg-blue-600 text-white rounded-2xl font-bold hover:bg-blue-700 shadow-lg shadow-blue-200 transition-colors"
+              className="w-14 h-14 flex items-center justify-center bg-blue-600 text-white rounded-2xl hover:bg-blue-700 shadow-lg shadow-blue-200 transition-all"
+              title={currentIndex === vocabulary.length - 1 ? 'На проверку' : 'Дальше'}
             >
-              {currentIndex === vocabulary.length - 1 ? 'На проверку →' : 'Дальше →'} <i className="fa-solid fa-arrow-right ml-2"></i>
+              <i className="fa-solid fa-arrow-right text-xl"></i>
             </button>
           </div>
         </>
@@ -301,22 +303,23 @@ const VocabularyCard: React.FC<VocabularyCardProps> = ({
             )}
           </div>
 
-          {/* Кнопки для проверки */}
-          <div className="flex gap-3 w-full">
+            {/* Кнопки для проверки */}
+          <div className="flex gap-3 w-full max-w-sm mx-auto">
             {!testFeedback ? (
               <>
                 <button
                   onClick={() => setUserAnswer('')}
-                  className="flex-1 py-4 bg-slate-100 text-slate-600 rounded-2xl font-bold hover:bg-slate-200 transition-colors"
+                  className="w-14 h-14 flex items-center justify-center bg-slate-100 text-slate-500 rounded-2xl hover:bg-slate-200 transition-all shadow-sm"
+                  title="Очистить"
                 >
-                  🔄 Очистить
+                  <i className="fa-solid fa-eraser text-xl"></i>
                 </button>
                 <button
                   onClick={handleTestAnswer}
                   disabled={userAnswer.trim() === ''}
-                  className="flex-1 py-4 bg-amber-600 text-white rounded-2xl font-bold hover:bg-amber-700 disabled:opacity-50 transition-colors"
+                  className="flex-1 py-4 bg-amber-600 text-white rounded-2xl font-bold hover:bg-amber-700 disabled:opacity-50 transition-all shadow-lg shadow-amber-100"
                 >
-                  ✓ Проверить
+                  Проверить
                 </button>
               </>
             ) : (
@@ -324,22 +327,29 @@ const VocabularyCard: React.FC<VocabularyCardProps> = ({
                 <button
                   onClick={() => handlePrev()}
                   disabled={currentIndex === 0}
-                  className="flex-1 py-4 bg-white border-2 border-slate-200 text-slate-600 rounded-2xl font-bold hover:bg-slate-50 disabled:opacity-50 transition-colors"
+                  className="w-14 h-14 flex items-center justify-center bg-white border border-slate-200 text-slate-500 hover:text-blue-600 rounded-2xl transition-all shadow-sm"
+                  title="Назад"
                 >
-                  <i className="fa-solid fa-arrow-left mr-2"></i> Назад
+                  <i className="fa-solid fa-arrow-left text-xl"></i>
                 </button>
                 <button
                   onClick={() => setTestDirection(testDirection === 'de-to-ru' ? 'ru-to-de' : 'de-to-ru')}
-                  className="px-4 py-4 bg-purple-600 text-white rounded-2xl font-bold hover:bg-purple-700 transition-colors"
+                  className="w-14 h-14 flex items-center justify-center bg-purple-100 text-purple-600 rounded-2xl hover:bg-purple-200 transition-all shadow-sm"
                   title="Переключить направление перевода"
                 >
-                  🔀
+                  <i className="fa-solid fa-shuffle text-xl"></i>
                 </button>
                 <button
                   onClick={handleNext}
-                  className="flex-1 py-4 bg-green-600 text-white rounded-2xl font-bold hover:bg-green-700 transition-colors"
+                  className="flex-1 py-4 bg-green-600 text-white rounded-2xl font-bold hover:bg-green-700 transition-all shadow-lg shadow-green-100"
                 >
-                  {currentIndex === vocabulary.length - 1 ? 'Завершить 🏁' : 'Дальше →'}
+                  {currentIndex === vocabulary.length - 1 ? (
+                    <div className="flex items-center justify-center">
+                      <i className="fa-solid fa-flag-checkered mr-2"></i> Финиш
+                    </div>
+                  ) : (
+                    <i className="fa-solid fa-arrow-right text-xl"></i>
+                  )}
                 </button>
               </>
             )}

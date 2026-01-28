@@ -79,13 +79,15 @@ export const useLessonLogic = () => {
     const { currentExerciseIdx, currentTaskIdx } = state.progress;
     const statsKey = `${currentExerciseIdx}-${currentTaskIdx}`;
     
+    const stats = state.progress.statistics || { correct: 0, incorrect: 0, skipped: 0, answers: {} };
+    
     updateProgress({
       statistics: {
-        ...state.progress.statistics,
-        correct: state.progress.statistics.correct + (isCorrect ? 1 : 0),
-        incorrect: state.progress.statistics.incorrect + (isCorrect ? 0 : 1),
+        ...stats,
+        correct: (stats.correct || 0) + (isCorrect ? 1 : 0),
+        incorrect: (stats.incorrect || 0) + (isCorrect ? 0 : 1),
         answers: {
-          ...state.progress.statistics.answers,
+          ...(stats.answers || {}),
           [statsKey]: { userAnswer, correct: isCorrect }
         }
       }

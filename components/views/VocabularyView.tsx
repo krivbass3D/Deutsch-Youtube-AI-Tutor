@@ -14,7 +14,7 @@ interface VocabularyViewProps {
 
 const VocabularyView: React.FC<VocabularyViewProps> = ({ onFinish, onSkip }) => {
   const { selectedLesson } = useAppStore();
-  const { state, setLessonState } = useLessonStore();
+  const { state, updateSRState, updateVocabStats, updateDifficultWords } = useLessonStore();
   const [stableVocab, setStableVocab] = useState<Vocabulary[]>([]);
 
   useEffect(() => {
@@ -51,31 +51,27 @@ const VocabularyView: React.FC<VocabularyViewProps> = ({ onFinish, onSkip }) => 
         difficultWords={new Set(state.difficultWords)}
         onFinish={onFinish}
         onRecordView={(word, translation, timeSpent) => {
-          setLessonState({
-            vocabStats: recordWordView(state.vocabStats, word, timeSpent)
-          });
+          const isDiff = state.difficultWords.includes(word);
+          updateVocabStats(recordWordView(state.vocabStats, word, translation, timeSpent, isDiff));
         }}
         onReview={(word, translation, type, isCorrect) => {
+          const isDiff = state.difficultWords.includes(word);
           // Update SR State
           let newSRState = { ...state.srState };
           if (isCorrect) {
-            newSRState = recordSuccessfulReview(newSRState, word, translation, type);
+            newSRState = recordSuccessfulReview(newSRState, word, translation, type, isDiff);
           } else {
             newSRState = recordFailedReview(newSRState, word, translation, type);
           }
 
           // Update Vocab Stats
-          const newVocabStats = recordExamAnswer(state.vocabStats, word, isCorrect);
+          const newVocabStats = recordExamAnswer(state.vocabStats, word, isCorrect, translation);
 
-          setLessonState({
-            srState: newSRState,
-            vocabStats: newVocabStats
-          });
+          updateSRState(newSRState);
+          updateVocabStats(newVocabStats);
         }}
         onToggleDifficulty={(word) => {
-          setLessonState({
-            difficultWords: toggleDifficultWord(state.difficultWords, word)
-          });
+          updateDifficultWords(toggleDifficultWord(state.difficultWords, word));
         }}
       />
     </div>

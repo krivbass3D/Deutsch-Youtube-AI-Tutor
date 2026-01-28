@@ -87,51 +87,77 @@ const PracticeView: React.FC<PracticeViewProps> = ({ onFeedback, onExerciseAttem
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
-        {/* Left Side: Task & Vocabulary */}
-        <div className="lg:col-span-7 space-y-8">
-            {/* Task Card */}
-            <div className="bg-white rounded-[40px] p-10 border border-slate-200 shadow-xl shadow-slate-200/30 relative overflow-hidden group">
-                <div className="absolute top-0 right-0 p-6 opacity-5 group-hover:opacity-10 transition-opacity">
-                    <i className="fa-solid fa-language text-8xl -rotate-12"></i>
+        {/* Left Side: Task */}
+        <div className="lg:col-span-7 space-y-6">
+            {/* Task Card - Smaller and more compact */}
+            <div className="bg-white rounded-3xl p-6 border border-slate-200 shadow-lg shadow-slate-200/20 relative overflow-hidden group">
+                <div className="absolute top-0 right-0 p-4 opacity-5 group-hover:opacity-10 transition-opacity">
+                    <i className="fa-solid fa-language text-6xl -rotate-12"></i>
                 </div>
                 
-                <span className="inline-block px-4 py-1.5 bg-blue-50 text-blue-600 rounded-full text-[10px] font-black uppercase tracking-widest mb-6 border border-blue-100/50">
+                <span className="inline-block px-3 py-1 bg-blue-50 text-blue-600 rounded-full text-[9px] font-black uppercase tracking-widest mb-4 border border-blue-100/50">
                     Переведите:
                 </span>
                 
-                <h2 className="text-3xl md:text-4xl font-black text-slate-800 leading-tight tracking-tight">
+                <h2 className="text-xl md:text-2xl font-black text-slate-800 leading-tight tracking-tight">
                     {currentTask}
                 </h2>
 
-                <div className="mt-8 flex items-center space-x-4">
+                <div className="mt-6 flex items-center space-x-4">
                     <button 
                        onClick={onReset}
-                       className="px-6 py-2 bg-red-50 text-red-500 rounded-2xl text-xs font-bold border border-red-100 hover:bg-red-100 transition-all shadow-sm flex items-center"
+                       className="px-4 py-1.5 bg-red-50 text-red-500 rounded-xl text-[10px] font-bold border border-red-100 hover:bg-red-100 transition-all shadow-sm flex items-center"
                     >
                         <i className="fa-solid fa-trash-can mr-2"></i> Очистить прогресс урока
                     </button>
                 </div>
             </div>
 
-            {/* Compact Vocabulary Helper */}
-            <div className="space-y-4">
-               <div className="flex items-center justify-between">
-                  <h4 className="font-black text-slate-700 flex items-center">
-                    <i className="fa-solid fa-book-bookmark text-blue-500 mr-2 text-sm"></i>
+            {/* Tutor Chat - Moved up on mobile visually, stays left on desktop but we will swap cols below if needed? Or just move Vocab to right side? */}
+            <div className="block lg:hidden">
+              <TutorChat
+                  lesson={selectedLesson}
+                  lessonId={selectedLesson.lesson_id}
+                  currentExerciseIndex={currentExerciseIdx}
+                  currentTaskIndex={currentTaskIdx}
+                  onFeedback={onFeedback}
+                  onExerciseAttempt={onExerciseAttempt}
+              />
+            </div>
+        </div>
+
+        {/* Right Side: Tutor Chat (Desktop) & Vocabulary Helper */}
+        <div className="lg:col-span-5 space-y-6 lg:sticky lg:top-24">
+            <div className="hidden lg:block">
+              <TutorChat
+                  lesson={selectedLesson}
+                  lessonId={selectedLesson.lesson_id}
+                  currentExerciseIndex={currentExerciseIdx}
+                  currentTaskIndex={currentTaskIdx}
+                  onFeedback={onFeedback}
+                  onExerciseAttempt={onExerciseAttempt}
+              />
+            </div>
+
+            {/* Compact Vocabulary Helper - Now below the chat on all screens */}
+            <div className="bg-white/50 backdrop-blur-sm rounded-3xl p-6 border border-slate-100">
+               <div className="flex items-center justify-between mb-4">
+                  <h4 className="font-black text-slate-700 flex items-center text-sm">
+                    <i className="fa-solid fa-book-bookmark text-blue-500 mr-2"></i>
                     Слова из урока
                   </h4>
-                  <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">
+                  <span className="text-[9px] font-bold text-slate-400 uppercase tracking-widest">
                     {selectedLesson.vocabulary?.length || 0} слов
                   </span>
                </div>
                
-               <div className="flex flex-wrap gap-2">
+               <div className="flex flex-wrap gap-2 max-h-[300px] overflow-y-auto overflow-x-hidden custom-scrollbar pr-2">
                  {selectedLesson.vocabulary?.map((v, i) => (
                    <div 
                      key={i} 
-                     className="group/chip relative bg-white border border-slate-200 hover:border-blue-300 hover:shadow-md hover:shadow-blue-50 px-4 py-2 rounded-2xl transition-all cursor-default"
+                     className="group/chip relative bg-white border border-slate-100 hover:border-blue-200 hover:shadow-sm px-3 py-1.5 rounded-xl transition-all cursor-default"
                    >
-                     <p className="text-sm font-bold text-slate-800 group-hover:text-blue-600 transition-colors">
+                     <p className="text-xs font-bold text-slate-800 group-hover:text-blue-600 transition-colors">
                         {v.word}
                      </p>
                      <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-3 py-1 bg-slate-800 text-white text-[10px] font-bold rounded-lg opacity-0 group-hover/chip:opacity-100 transition-opacity pointer-events-none whitespace-nowrap z-30 shadow-xl">
@@ -142,18 +168,6 @@ const PracticeView: React.FC<PracticeViewProps> = ({ onFeedback, onExerciseAttem
                  ))}
                </div>
             </div>
-        </div>
-
-        {/* Right Side: Tutor Chat */}
-        <div className="lg:col-span-5 sticky top-24">
-            <TutorChat
-                lesson={selectedLesson}
-                lessonId={selectedLesson.lesson_id}
-                currentExerciseIndex={currentExerciseIdx}
-                currentTaskIndex={currentTaskIdx}
-                onFeedback={onFeedback}
-                onExerciseAttempt={onExerciseAttempt}
-            />
         </div>
       </div>
     </div>

@@ -23,7 +23,7 @@ const DashboardView: React.FC<DashboardViewProps> = ({ lessons, onSelectLesson, 
   }, [lessons]);
 
   return (
-    <div className="space-y-8 animate-fade-in">
+    <div className="space-y-4 md:space-y-8 animate-fade-in">
       <GlobalDashboard 
         lessons={sortedLessons} 
         userStates={allUserStates} 
