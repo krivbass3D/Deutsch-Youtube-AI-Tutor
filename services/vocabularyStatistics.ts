@@ -70,19 +70,25 @@ export const recordWordView = (
 export const recordExamAnswer = (
   currentStats: VocabStatsState,
   word: string,
-  isCorrect: boolean
+  isCorrect: boolean,
+  translation: string = ""
 ): VocabStatsState => {
-  if (!isCorrect) return currentStats;
-
   const newStats = { ...currentStats };
-  const existing = newStats[word];
+  const existing = newStats[word] || {
+    word,
+    translation,
+    repeatCount: 1, // At least once if they are taking an exam
+    totalTimeSpent: 0,
+    lastSeenAt: new Date().toISOString(),
+    isDifficult: false,
+    correctAnswersInExam: 0
+  };
 
-  if (existing) {
-    newStats[word] = {
-      ...existing,
-      correctAnswersInExam: existing.correctAnswersInExam + 1
-    };
-  }
+  newStats[word] = {
+    ...existing,
+    lastSeenAt: new Date().toISOString(),
+    correctAnswersInExam: isCorrect ? existing.correctAnswersInExam + 1 : existing.correctAnswersInExam
+  };
   
   return newStats;
 };

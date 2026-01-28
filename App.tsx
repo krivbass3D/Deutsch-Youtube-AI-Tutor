@@ -8,6 +8,8 @@ import ExamMode from './components/ExamMode';
 import StatisticsDashboard from './components/StatisticsDashboard';
 import GlobalDashboard from './components/GlobalDashboard';
 import LessonCard from './components/LessonCard';
+import VocabularyList from './components/VocabularyList';
+import GlobalVocabulary from './components/GlobalVocabulary';
 // Services
 import { 
   sortBySpacedRepetition, 
@@ -34,7 +36,7 @@ import { ToastContainer, showToast } from './components/Toast';
 import { useAuth } from './components/AuthContext';
 import { AuthScreen } from './components/AuthScreen';
 
-type ViewMode = 'dashboard' | 'lesson-overview' | 'vocabulary' | 'practice' | 'exam' | 'add-lesson' | 'summary';
+type ViewMode = 'dashboard' | 'lesson-overview' | 'vocabulary' | 'practice' | 'exam' | 'add-lesson' | 'summary' | 'global-vocabulary';
 
 // Type for the consolidated state we hold for the active lesson
 interface ActiveLessonState {
@@ -66,7 +68,13 @@ const App: React.FC = () => {
   const progress = lessonState?.progress || null;
 
   const [expandedVocabulary, setExpandedVocabulary] = useState(false);
-  const [showStatistics, setShowStatistics] = useState(false);
+  const [showStatistics, setShowStatistics] = useState<'lesson' | 'stats' | 'vocab'>('lesson');
+
+  // Define global handler for GlobalDashboard to call
+  useEffect(() => {
+    (window as any).toggleGlobalVocab = () => setCurrentView('global-vocabulary');
+    return () => { delete (window as any).toggleGlobalVocab; };
+  }, []);
   
   // Stable vocabulary list for the current session to prevent re-sorting on every interaction
   const [stableVocabulary, setStableVocabulary] = useState<Vocabulary[]>([]);
@@ -151,6 +159,7 @@ const App: React.FC = () => {
   const selectLesson = async (lesson: Lesson) => {
     setSelectedLesson(lesson);
     setExpandedVocabulary(false);
+    setShowStatistics('lesson');
     setCurrentView('lesson-overview');
     setLessonState(null); // Clear previous state while loading
 
@@ -200,6 +209,25 @@ const App: React.FC = () => {
         });
         setSaveStatus('saved');
         setTimeout(() => setSaveStatus('idle'), 2000);
+
+        // Update local allUserStates so GlobalVocabulary/Dashboard stay in sync
+        setAllUserStates(prev => {
+          const newState = {
+            lesson_id: selectedLesson.lesson_id,
+            progress: lessonState.progress,
+            spaced_repetition: lessonState.srState,
+            vocabulary_stats: lessonState.vocabStats,
+            difficult_words: lessonState.difficultWords,
+            updated_at: new Date().toISOString()
+          };
+          const idx = prev.findIndex(s => s.lesson_id === selectedLesson.lesson_id);
+          if (idx >= 0) {
+            const next = [...prev];
+            next[idx] = newState;
+            return next;
+          }
+          return [...prev, newState];
+        });
       } catch (err) {
         console.error('Error saving state:', err);
         setSaveStatus('error');
@@ -431,6 +459,14 @@ const App: React.FC = () => {
           </div>
         )}
 
+        {currentView === 'global-vocabulary' && (
+          <GlobalVocabulary 
+            lessons={lessons} 
+            userStates={allUserStates}
+            onBack={() => setCurrentView('dashboard')} 
+          />
+        )}
+
         {currentView === 'lesson-overview' && selectedLesson && lessonState && progress && (
           <div className="max-w-2xl mx-auto bg-white rounded-3xl p-8 shadow-md border border-slate-100 animate-fade-in">
             {/* Header + Tabs */}
@@ -441,9 +477,9 @@ const App: React.FC = () => {
               
               <div className="flex bg-slate-100 p-1 rounded-xl shrink-0">
                 <button
-                  onClick={() => setShowStatistics(false)}
+                  onClick={() => setShowStatistics('lesson')}
                   className={`px-4 py-2 rounded-lg text-sm font-bold transition-all ${
-                    !showStatistics 
+                    showStatistics === 'lesson' 
                       ? 'bg-white text-blue-600 shadow-sm' 
                       : 'text-slate-500 hover:text-slate-700'
                   }`}
@@ -451,9 +487,19 @@ const App: React.FC = () => {
                   <i className="fa-solid fa-book-open mr-2"></i> Урок
                 </button>
                 <button
-                  onClick={() => setShowStatistics(true)}
+                  onClick={() => setShowStatistics('vocab')}
                   className={`px-4 py-2 rounded-lg text-sm font-bold transition-all ${
-                    showStatistics 
+                    showStatistics === 'vocab' 
+                      ? 'bg-white text-blue-600 shadow-sm' 
+                      : 'text-slate-500 hover:text-slate-700'
+                  }`}
+                >
+                  <i className="fa-solid fa-list mr-2"></i> Словарь
+                </button>
+                <button
+                  onClick={() => setShowStatistics('stats')}
+                  className={`px-4 py-2 rounded-lg text-sm font-bold transition-all ${
+                    showStatistics === 'stats' 
                       ? 'bg-white text-blue-600 shadow-sm' 
                       : 'text-slate-500 hover:text-slate-700'
                   }`}
@@ -463,11 +509,19 @@ const App: React.FC = () => {
               </div>
             </div>
 
-            {showStatistics ? (
+            {showStatistics === 'stats' ? (
               <StatisticsDashboard 
                 lessonId={selectedLesson.lesson_id} 
                 vocabulary={selectedLesson.vocabulary || []}
                 vocabStats={lessonState.vocabStats}
+                srState={lessonState.srState}
+              />
+            ) : showStatistics === 'vocab' ? (
+              <VocabularyList 
+                vocabulary={selectedLesson.vocabulary || []} 
+                title="Слова этого урока"
+                stats={lessonState.vocabStats}
+                difficultWords={new Set(lessonState.difficultWords)}
                 srState={lessonState.srState}
               />
             ) : (

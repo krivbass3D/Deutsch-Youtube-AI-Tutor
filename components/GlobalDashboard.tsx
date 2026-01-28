@@ -224,9 +224,17 @@ const GlobalDashboard: React.FC<GlobalDashboardProps> = ({ lessons, userStates =
   return (
     <div className="space-y-8">
       {/* Заголовок и описание */}
-      <div>
-        <h2 className="text-3xl font-bold text-slate-800 mb-2">📊 Ваш прогресс обучения</h2>
-        <p className="text-slate-600">Общая статистика по всем урокам</p>
+      <div className="flex justify-between items-end">
+        <div>
+          <h2 className="text-3xl font-bold text-slate-800 mb-2">📊 Ваш прогресс обучения</h2>
+          <p className="text-slate-600">Общая статистика по всем урокам</p>
+        </div>
+        <button 
+          onClick={() => (window as any).toggleGlobalVocab?.()} 
+          className="px-6 py-3 bg-white border-2 border-slate-200 rounded-2xl font-bold text-slate-700 hover:bg-slate-50 transition-all flex items-center shadow-sm"
+        >
+          <i className="fa-solid fa-book mr-2 text-blue-600"></i> Мой словарь
+        </button>
       </div>
 
       {/* Основные KPI */}
