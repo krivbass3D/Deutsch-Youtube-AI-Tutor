@@ -4,22 +4,27 @@
 
 import { Lesson, LessonProgress } from '../types';
 import { calculateAggregateStats, VocabStatsState } from './vocabularyStatistics';
-import { getSpacedRepetitionStats, SRState } from './spacedRepetition';
+import { getSpacedRepetitionStats, SRState, getSpacedRepetitionData } from './spacedRepetition';
 
 export interface LessonMetrics {
   lessonId: string;
   title: string;
   totalVocab: number;
-  learnedWords: number;
+  learnedWords: number; // For backward compatibility if needed
+  inProgressWords: number; // Added: words with repeatCount > 0 but < 5
+  masteredWords: number;   // Added: words with repeatCount >= 5
   dueWords: number;
   wordsLearnedThisWeek: number;
   difficultWordsCount: number;
   averageTimePerWord: number;
   lastStudiedAt: string | null;
   daysSinceLastStudy: number;
+  totalTasks: number;
   exercisesCompleted: number;
   exerciseAccuracy: number; // 0-100%
   grammarMastery: number; // 0-100%
+  vocabProgressPercent: number; // 0-100 (Weighted)
+  exerciseProgressPercent: number; // 0-100
   overallProgress: number; // 0-100%
   difficultyLevel: 'easy' | 'medium' | 'hard'; // based on accuracy
 }
@@ -46,10 +51,10 @@ export const getLessonMetrics = (
   // Слова, выученные на этой неделе
   const oneWeekAgo = new Date();
   oneWeekAgo.setDate(oneWeekAgo.getDate() - 7);
-  const wordsLearnedThisWeek = Object.values(vocabStats).filter(w => {
+  const wordsLearnedThisWeek = vocabStats ? Object.values(vocabStats).filter(w => {
     const seenDate = new Date(w.lastSeenAt);
     return seenDate >= oneWeekAgo && w.repeatCount >= 5;
-  }).length;
+  }).length : 0;
 
   // Последнее изучение
   const lastStudied = aggStats.lastStudiedAt ? new Date(aggStats.lastStudiedAt) : null;
@@ -58,17 +63,32 @@ export const getLessonMetrics = (
     : 0;
 
   // Среднее время на слово
-  const totalTime = Object.values(vocabStats).reduce((sum, w) => sum + (w.totalTimeSpent || 0), 0);
-  const totalWords = Object.keys(vocabStats).length;
+  const totalTime = vocabStats ? Object.values(vocabStats).reduce((sum, w) => sum + (w.totalTimeSpent || 0), 0) : 0;
+  const totalWords = vocabStats ? Object.keys(vocabStats).length : 0;
   const avgTimePerWord = totalWords > 0 ? totalTime / totalWords : 0;
 
   // Грамматика мастерство (на основе точности упражнений)
   const grammarMastery = exerciseAccuracy;
 
-  // ОБЩИЙ ПРОГРЕСС
-  // 1. Прогресс слов (SR)
+  // Взвешенный прогресс слов (каждый repeatCount от 0 до 5 дает по 20% веса слова)
+  let totalWeightedVocabProgress = 0;
+  let inProgressWords = 0;
+  let masteredWords = 0;
+
+  lesson.vocabulary?.forEach(item => {
+    const srData = getSpacedRepetitionData(srState, item.word, item.translation, item.type);
+    const count = Math.min(5, srData.reviewCount || 0);
+    totalWeightedVocabProgress += (count / 5);
+    
+    if (count >= 5) {
+      masteredWords++;
+    } else if (count > 0) {
+      inProgressWords++;
+    }
+  });
+
   const vocabProgress = lesson.vocabulary?.length 
-    ? srStats.learnedWords / lesson.vocabulary.length 
+    ? totalWeightedVocabProgress / lesson.vocabulary.length 
     : 0;
   
   // 2. Прогресс упражнений (Завершенность)
@@ -107,16 +127,21 @@ export const getLessonMetrics = (
     lessonId: lesson.lesson_id,
     title: lesson.title,
     totalVocab: lesson.vocabulary?.length || 0,
-    learnedWords: srStats.learnedWords,
+    learnedWords: masteredWords,
+    inProgressWords,
+    masteredWords,
     dueWords: srStats.dueWords,
     wordsLearnedThisWeek,
     difficultWordsCount: srStats.difficultWords,
     averageTimePerWord: avgTimePerWord,
     lastStudiedAt: aggStats.lastStudiedAt || null,
     daysSinceLastStudy,
-    exercisesCompleted: solvedTasksCount, // Используем уникальные решенные задачи (или totalAttempts если важно количество попыток)
+    totalTasks,
+    exercisesCompleted: solvedTasksCount,
     exerciseAccuracy,
     grammarMastery,
+    vocabProgressPercent: Math.round(vocabProgress * 100),
+    exerciseProgressPercent: Math.round(exerciseProgress * 100),
     overallProgress,
     difficultyLevel
   };

@@ -11,9 +11,15 @@ interface GlobalDashboardProps {
   lessons: Lesson[];
   userStates: any[]; // Array of DB records
   onSelectLesson?: (lessonId: string) => void;
+  onToggleVocab?: () => void;
 }
 
-const GlobalDashboard: React.FC<GlobalDashboardProps> = ({ lessons, userStates = [], onSelectLesson }) => {
+const GlobalDashboard: React.FC<GlobalDashboardProps> = ({ 
+  lessons = [], 
+  userStates = [], 
+  onSelectLesson,
+  onToggleVocab 
+}) => {
   
   // Calculate aggregates from userStates
   const allProgress = useMemo(() => {
@@ -230,7 +236,7 @@ const GlobalDashboard: React.FC<GlobalDashboardProps> = ({ lessons, userStates =
           <p className="text-slate-600">Общая статистика по всем урокам</p>
         </div>
         <button 
-          onClick={() => (window as any).toggleGlobalVocab?.()} 
+          onClick={onToggleVocab} 
           className="px-6 py-3 bg-white border-2 border-slate-200 rounded-2xl font-bold text-slate-700 hover:bg-slate-50 transition-all flex items-center shadow-sm"
         >
           <i className="fa-solid fa-book mr-2 text-blue-600"></i> Мой словарь

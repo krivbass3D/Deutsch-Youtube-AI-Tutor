@@ -36,7 +36,7 @@ export const getSpacedRepetitionData = (
   translation: string,
   type: string
 ): SpacedRepetitionData => {
-  const existing = srState[word];
+  const existing = srState ? srState[word] : undefined;
   if (existing) {
     return existing;
   }
@@ -138,7 +138,7 @@ export const recordFailedReview = (
  * Проверить, пора ли повторять слово
  */
 export const isWordDue = (srState: SRState, word: string): boolean => {
-  const data = srState[word];
+  const data = srState ? srState[word] : undefined;
   if (!data) return true; // Новое слово — доступно сразу
 
   if (!data.nextReviewDate) return true;

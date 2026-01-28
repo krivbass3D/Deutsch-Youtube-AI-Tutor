@@ -23,6 +23,7 @@ export interface Lesson {
   vocabulary: Vocabulary[];
   exercises: Exercise[];
   answers: Answer[];
+  tags?: string[];
 }
 
 export interface ChatMessage {
@@ -49,60 +50,30 @@ export interface LessonProgress {
   learnedTasks?: string[]; // Array of "exerciseIdx_taskIdx"
 }
 
-// ============================================
-// НОВЫЕ ТИПЫ ДЛЯ PROGRESS SERVICE
-// ============================================
+// Types for Spaced Repetition and Statistics
+export type SRState = Record<string, any>;
+export type VocabStatsState = Record<string, any>;
+export type DifficultyState = string[];
 
-export interface WordProgressRecord {
-  word: string;
-  translation: string;
-  attempts: number;
-  correctAttempts: number;
-  examPassed: boolean;
-  examPassedAt: number | null;
-  lastAttemptAt: number;
+// User Profile / State in DB
+export interface UserState {
+    lesson_id: string;
+    progress: LessonProgress;
+    spaced_repetition: SRState;
+    vocabulary_stats: VocabStatsState;
+    difficult_words: DifficultyState;
+    updated_at: string;
 }
 
-export interface ExerciseProgressRecord {
-  sentence: string;
-  translation: string;
-  attempts: number;
-  correctAttempts: number;
-  firstAttemptCorrect: boolean;
-  correctAt: number | null;
-  isLearned: boolean;
-  lastAttemptAt: number;
-}
+export type ViewType = 'dashboard' | 'lesson_overview' | 'vocabulary' | 'practice' | 'exam' | 'stats' | 'vocab' | 'summary';
 
-export interface LessonMetricsRecord {
-  totalWords: number;
-  wordsLearned: number;
-  totalExercises: number;
-  exercisesLearned: number;
-  exerciseAccuracy: number;
-}
-
-export interface LessonDataRecord {
-  status: 'not_started' | 'in_progress' | 'completed';
-  startedAt: number;
-  vocabulary: Record<string, WordProgressRecord>;
-  exercises: Record<string, ExerciseProgressRecord>;
-  metrics: LessonMetricsRecord;
-  completedAt: number | null;
-}
-
-export interface DashboardStatsRecord {
-  totalWordsLearned: number;
-  wordsLearnedThisWeek: number;
-  totalExerciseAttempts: number;
-  exerciseAttemptsCorrect: number;
-  lessonsInProgress: number;
-  lessonsCompleted: number;
-}
-
-export interface UserProgressRecord {
-  stats: DashboardStatsRecord;
-  lessons: Record<string, LessonDataRecord>;
-  weeklyStats: Record<string, { wordsLearned: number; exerciseAttempts: number; correctAttempts: number }>;
-  lastUpdated: number;
+export interface AppState {
+    user: any | null; // Supabase User
+    profile: any | null;
+    currentView: ViewType;
+    selectedLesson: Lesson | null;
+    allUserStates: UserState[];
+    selectedModel: 'gpt-4o' | 'gemini-1.5-pro';
+    loading: boolean;
+    error: string | null;
 }

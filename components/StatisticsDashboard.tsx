@@ -33,7 +33,8 @@ const StatisticsDashboard: React.FC<StatisticsDashboardProps> = ({
   
   // Helper to filter words
   const getProblematic = (): WordStatistics[] => {
-    return Object.values(vocabStats)
+    if (!vocabStats) return [];
+    return (Object.values(vocabStats) as WordStatistics[])
       .filter((w: WordStatistics) => w.repeatCount >= 3 || w.isDifficult)
       .sort((a: WordStatistics, b: WordStatistics) => b.repeatCount - a.repeatCount);
   };
@@ -50,7 +51,7 @@ const StatisticsDashboard: React.FC<StatisticsDashboardProps> = ({
     const statsKey = `${exIdx}-${taskIdx}`;
     
     if (progress.learnedTasks?.includes(taskId)) return 'learned'; // ✅
-    if (progress.statistics.answers[statsKey]) return 'attempted'; // 📝
+    if (progress.statistics?.answers?.[statsKey]) return 'attempted'; // 📝
     
     // Check if it's the current task or a future one
     if (exIdx < progress.currentExerciseIdx || (exIdx === progress.currentExerciseIdx && taskIdx <= progress.currentTaskIdx)) {
@@ -102,8 +103,8 @@ const StatisticsDashboard: React.FC<StatisticsDashboardProps> = ({
             </div>
             <div className="bg-purple-50 rounded-xl p-4 border border-purple-200">
               <p className="text-2xl font-bold text-purple-700">
-                {Object.values(vocabStats).length > 0
-                  ? formatTime(Object.values(vocabStats).reduce((sum, w: any) => sum + (w.totalTimeSpent || 0), 0))
+                {vocabStats && Object.values(vocabStats).length > 0
+                  ? formatTime(Object.values(vocabStats).reduce((sum, w: any) => sum + (w.totalTimeSpent || 0), 0) as number)
                   : '0сек'}
               </p>
               <p className="text-xs text-slate-600">время обучения</p>
@@ -183,11 +184,11 @@ const StatisticsDashboard: React.FC<StatisticsDashboardProps> = ({
             </div>
             <div className="grid grid-cols-2 gap-4 mt-6">
                 <div className="bg-green-50 border border-green-100 p-3 rounded-2xl">
-                    <p className="text-lg font-black text-green-600">{progress.statistics.correct}</p>
+                    <p className="text-lg font-black text-green-600">{progress.statistics?.correct || 0}</p>
                     <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Верно</p>
                 </div>
                 <div className="bg-red-50 border border-red-100 p-3 rounded-2xl">
-                    <p className="text-lg font-black text-red-600">{progress.statistics.incorrect}</p>
+                    <p className="text-lg font-black text-red-600">{progress.statistics?.incorrect || 0}</p>
                     <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Ошибок</p>
                 </div>
             </div>

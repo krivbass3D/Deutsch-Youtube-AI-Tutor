@@ -97,6 +97,14 @@ export const recordExamAnswer = (
  * Вычислить агрегированную статистику
  */
 export const calculateAggregateStats = (stats: VocabStatsState): LessonStatisticsAggregated => {
+  if (!stats) {
+    return {
+      totalWordsStudied: 0,
+      averageRepeatCount: 0,
+      wordsWithDifficulty: 0,
+      lastStudiedAt: new Date().toISOString()
+    };
+  }
   const values = Object.values(stats);
   const totalWords = values.length;
   
