@@ -36,7 +36,8 @@ const TutorChat: React.FC<TutorChatProps> = ({
   useEffect(() => {
     const exerciseKey = `${currentExerciseIndex}_${currentTaskIndex}`;
     setFirstAttemptTracker(prev => {
-      if (!prev[exerciseKey]) {
+      // Если для этой задачи еще нет записи, значит это ПЕРВАЯ попытка
+      if (prev[exerciseKey] === undefined) {
         return { ...prev, [exerciseKey]: true };
       }
       return prev;
@@ -45,12 +46,9 @@ const TutorChat: React.FC<TutorChatProps> = ({
 
   useEffect(() => {
     setMessages([]);
-    // Отмечаем, что это новая попытка (уже не первая)
-    const exerciseKey = `${currentExerciseIndex}_${currentTaskIndex}`;
-    setFirstAttemptTracker(prev => ({
-      ...prev,
-      [exerciseKey]: false
-    }));
+    // При сбросе чата (кнопкой Сначала) или смене задачи, 
+    // если это не программная смена, мы можем хотеть сбросить трекер, 
+    // но сейчас мы просто очищаем сообщения.
   }, [resetChat, currentExerciseIndex, currentTaskIndex]);
 
   useEffect(() => {

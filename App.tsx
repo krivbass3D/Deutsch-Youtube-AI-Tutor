@@ -70,6 +70,79 @@ const App: React.FC = () => {
   const [expandedVocabulary, setExpandedVocabulary] = useState(false);
   const [showStatistics, setShowStatistics] = useState<'lesson' | 'stats' | 'vocab'>('lesson');
 
+  const initializeProgress = (): LessonProgress => {
+    return {
+      vocabSkipped: false,
+      vocabCompleted: false,
+      currentExerciseIdx: 0,
+      currentTaskIdx: 0,
+      statistics: { correct: 0, incorrect: 0, skipped: 0, answers: {} },
+      completed: false,
+      lastActivityAt: new Date().toISOString(),
+      learnedTasks: []
+    };
+  };
+
+  const updateProgress = (newProgress: Partial<LessonProgress>) => {
+    if (!lessonState) return;
+    setLessonState(prev => prev ? ({
+      ...prev,
+      progress: { ...prev.progress, ...newProgress }
+    }) : null);
+  };
+
+  const handleStartVocab = () => setCurrentView('vocabulary');
+  const handleSkipVocab = () => {
+    updateProgress({ vocabSkipped: true });
+    setCurrentView('practice');
+  };
+  const handleVocabFinish = () => {
+    updateProgress({ vocabCompleted: true });
+    setCurrentView('practice');
+  };
+
+  const getNextUnlearnedTask = (exIdx: number, taskIdx: number): {exIdx: number, taskIdx: number} | null => {
+    if (!selectedLesson?.exercises) return null;
+    let nextEx = exIdx;
+    let nextTask = taskIdx + 1;
+
+    while (nextEx < selectedLesson.exercises.length) {
+      const ex = selectedLesson.exercises[nextEx];
+      while (nextTask < (ex.tasks?.length || 0)) {
+        const taskId = `${nextEx}_${nextTask}`;
+        if (!progress?.learnedTasks?.includes(taskId)) {
+          return { exIdx: nextEx, taskIdx: nextTask };
+        }
+        nextTask++;
+      }
+      nextEx++;
+      nextTask = 0;
+    }
+    return null;
+  };
+
+  const getPrevUnlearnedTask = (exIdx: number, taskIdx: number): {exIdx: number, taskIdx: number} | null => {
+    if (!selectedLesson?.exercises) return null;
+    let prevEx = exIdx;
+    let prevTask = taskIdx - 1;
+
+    while (prevEx >= 0) {
+      const ex = selectedLesson.exercises[prevEx];
+      while (prevTask >= 0) {
+        const taskId = `${prevEx}_${prevTask}`;
+        if (!progress?.learnedTasks?.includes(taskId)) {
+          return { exIdx: prevEx, taskIdx: prevTask };
+        }
+        prevTask--;
+      }
+      prevEx--;
+      if (prevEx >= 0) {
+        prevTask = (selectedLesson.exercises[prevEx].tasks?.length || 1) - 1;
+      }
+    }
+    return null;
+  };
+
   // Define global handler for GlobalDashboard to call
   useEffect(() => {
     (window as any).toggleGlobalVocab = () => setCurrentView('global-vocabulary');
@@ -171,7 +244,10 @@ const App: React.FC = () => {
       
       if (data) {
         setLessonState({
-          progress: data.progress as LessonProgress,
+          progress: {
+            ...data.progress,
+            learnedTasks: (data.progress as any).learnedTasks || []
+          } as LessonProgress,
           srState: (data.spaced_repetition || {}) as SRState,
           vocabStats: (data.vocabulary_stats || {}) as VocabStatsState,
           difficultWords: (data.difficult_words || []) as DifficultyState
@@ -192,6 +268,22 @@ const App: React.FC = () => {
       setCurrentView('dashboard');
     }
   };
+
+  // Jump to first unlearned task when entering practice or after reset
+  useEffect(() => {
+    if (currentView === 'practice' && progress && selectedLesson) {
+      const taskId = `${progress.currentExerciseIdx}_${progress.currentTaskIdx}`;
+      if (progress.learnedTasks?.includes(taskId)) {
+        const next = getNextUnlearnedTask(progress.currentExerciseIdx, progress.currentTaskIdx);
+        if (next) {
+          updateProgress({ currentExerciseIdx: next.exIdx, currentTaskIdx: next.taskIdx });
+        } else {
+          // All learned
+          setCurrentView('summary');
+        }
+      }
+    }
+  }, [currentView, progress?.learnedTasks]);
 
   // 3. Save State Effect
   // Debounce saving to Supabase when lessonState changes
@@ -237,37 +329,6 @@ const App: React.FC = () => {
     return () => clearTimeout(timer);
   }, [lessonState, selectedLesson, user]);
 
-  const initializeProgress = (): LessonProgress => {
-    return {
-      vocabSkipped: false,
-      vocabCompleted: false,
-      currentExerciseIdx: 0,
-      currentTaskIdx: 0,
-      statistics: { correct: 0, incorrect: 0, skipped: 0, answers: {} },
-      completed: false,
-      lastActivityAt: new Date().toISOString()
-    };
-  };
-
-  // Handlers need to update lessonState now
-  const updateProgress = (newProgress: Partial<LessonProgress>) => {
-    if (!lessonState) return;
-    setLessonState(prev => prev ? ({
-      ...prev,
-      progress: { ...prev.progress, ...newProgress }
-    }) : null);
-  };
-
-
-  const handleStartVocab = () => setCurrentView('vocabulary');
-  const handleSkipVocab = () => {
-    updateProgress({ vocabSkipped: true });
-    setCurrentView('practice');
-  };
-  const handleVocabFinish = () => {
-    updateProgress({ vocabCompleted: true });
-    setCurrentView('practice');
-  };
 
   const handleNextTask = () => {
     if (!selectedLesson || !progress) return;
@@ -283,10 +344,13 @@ const App: React.FC = () => {
         updatedStats.answers[key] = { userAnswer: '', correct: false };
     }
 
-    if (progress.currentTaskIdx < (currentEx.tasks?.length || 0) - 1) {
-      updateProgress({ currentTaskIdx: progress.currentTaskIdx + 1, statistics: updatedStats });
-    } else if (progress.currentExerciseIdx < (selectedLesson.exercises?.length || 0) - 1) {
-      updateProgress({ currentExerciseIdx: progress.currentExerciseIdx + 1, currentTaskIdx: 0, statistics: updatedStats });
+    const next = getNextUnlearnedTask(progress.currentExerciseIdx, progress.currentTaskIdx);
+    if (next) {
+      updateProgress({ 
+        currentExerciseIdx: next.exIdx, 
+        currentTaskIdx: next.taskIdx, 
+        statistics: updatedStats 
+      });
     } else {
       updateProgress({ completed: true, statistics: updatedStats });
       setCurrentView('summary');
@@ -294,17 +358,13 @@ const App: React.FC = () => {
   };
 
   const handlePrevTask = () => {
-    if (!selectedLesson || !progress || (progress.currentTaskIdx === 0 && progress.currentExerciseIdx === 0)) return;
-    if (progress.currentTaskIdx > 0) {
-      updateProgress({ currentTaskIdx: progress.currentTaskIdx - 1 });
-    } else if (progress.currentExerciseIdx > 0) {
-      const prevEx = selectedLesson.exercises?.[progress.currentExerciseIdx - 1];
-      if (prevEx) {
-        updateProgress({ 
-          currentExerciseIdx: progress.currentExerciseIdx - 1, 
-          currentTaskIdx: (prevEx.tasks?.length || 1) - 1 
-        });
-      }
+    if (!selectedLesson || !progress) return;
+    const prev = getPrevUnlearnedTask(progress.currentExerciseIdx, progress.currentTaskIdx);
+    if (prev) {
+      updateProgress({ 
+        currentExerciseIdx: prev.exIdx, 
+        currentTaskIdx: prev.taskIdx 
+      });
     }
   };
 
@@ -354,7 +414,18 @@ const App: React.FC = () => {
     return idx + progress.currentTaskIdx;
   }, [selectedLesson, progress]);
 
-  const progressPercent = totalTasks > 0 ? Math.round(((currentGlobalIdx + 1) / totalTasks) * 100) : 0;
+  const progressPercent = useMemo(() => {
+    if (totalTasks === 0) return 0;
+    // Learned tasks are considered completed. 
+    // Also add the current global index if it's not already learned.
+    const learnedCount = progress?.learnedTasks?.length || 0;
+    const currentTaskId = `${progress?.currentExerciseIdx}_${progress?.currentTaskIdx}`;
+    const currentIsLearned = progress?.learnedTasks?.includes(currentTaskId);
+    
+    const effectiveCompleted = currentIsLearned ? learnedCount : learnedCount + (currentGlobalIdx / totalTasks * totalTasks > learnedCount ? 1 : 0);
+    // Simpler: total learned / totalTasks or just based on global index + learned offset
+    return Math.round((learnedCount / totalTasks) * 100);
+  }, [totalTasks, progress, currentGlobalIdx]);
 
   if (authLoading || lessonsLoading) {
     return (
@@ -515,6 +586,8 @@ const App: React.FC = () => {
                 vocabulary={selectedLesson.vocabulary || []}
                 vocabStats={lessonState.vocabStats}
                 srState={lessonState.srState}
+                progress={lessonState.progress}
+                lesson={selectedLesson}
               />
             ) : showStatistics === 'vocab' ? (
               <VocabularyList 
@@ -568,7 +641,20 @@ const App: React.FC = () => {
                            {currentGlobalIdx > 0 ? 'Продолжить' : 'Начать'}
                          </button>
                          {currentGlobalIdx > 0 && (
-                           <button onClick={resetLesson} className="px-5 py-2.5 bg-slate-100 text-slate-600 rounded-xl text-sm font-bold">Сначала</button>
+                           <button onClick={resetLesson} className="px-5 py-2.5 bg-slate-100 text-slate-600 rounded-xl text-sm font-bold" title="Начать заново">Сначала</button>
+                         )}
+                         {(progress?.learnedTasks?.length || 0) > 0 && (
+                           <button 
+                             onClick={() => {
+                               if (window.confirm('Очистить список выученных предложений в этом уроке?')) {
+                                 updateProgress({ learnedTasks: [] });
+                               }
+                             }}
+                             className="px-5 py-2.5 bg-red-50 text-red-500 rounded-xl text-sm font-bold border border-red-100 shadow-sm"
+                             title="Сбросить выученные задачи"
+                           >
+                             <i className="fa-solid fa-trash-can"></i>
+                           </button>
                          )}
                        </div>
                      </div>
@@ -695,7 +781,7 @@ const App: React.FC = () => {
               <div className="flex space-x-4">
                 <button 
                   onClick={handlePrevTask} 
-                  disabled={currentGlobalIdx === 0}
+                  disabled={!getPrevUnlearnedTask(progress.currentExerciseIdx, progress.currentTaskIdx)}
                   className="flex-1 py-3 bg-white border border-slate-200 text-slate-600 rounded-2xl font-bold disabled:opacity-30 flex items-center justify-center transition-colors hover:bg-slate-50"
                 >
                   <i className="fa-solid fa-arrow-left mr-2"></i> Назад
@@ -705,6 +791,25 @@ const App: React.FC = () => {
                   className="flex-1 py-3 bg-blue-600 text-white rounded-2xl font-bold flex items-center justify-center shadow-lg shadow-blue-100 transition-colors hover:bg-blue-700"
                 >
                   Следующая <i className="fa-solid fa-arrow-right ml-2"></i>
+                </button>
+              </div>
+
+
+              <div className="flex justify-center mb-2">
+                <button 
+                  onClick={() => {
+                    if (window.confirm('Очистить список выученных предложений в этом уроке?')) {
+                      updateProgress({ learnedTasks: [] });
+                    }
+                  }}
+                  disabled={!progress?.learnedTasks?.length}
+                  className={`text-[11px] font-bold uppercase tracking-wider flex items-center transition-all px-4 py-2 rounded-xl border ${
+                    progress?.learnedTasks?.length 
+                    ? 'text-red-500 bg-red-50 border-red-100 cursor-pointer hover:bg-red-100' 
+                    : 'text-slate-300 bg-slate-50 border-slate-100 cursor-not-allowed opacity-50'
+                  }`}
+                >
+                  <i className="fa-solid fa-trash-can mr-2"></i> Очистить выученные предлож. {(progress?.learnedTasks?.length || 0) > 0 ? `(${progress.learnedTasks.length})` : ''}
                 </button>
               </div>
 
@@ -757,7 +862,13 @@ const App: React.FC = () => {
                       newProgress.statistics.incorrect++;
                     }
                     
-                    // Note: 'isFirstAttempt' logic could be used for more detailed scoring if needed
+                    if (isCorrect && isFirstAttempt) {
+                      const taskId = `${prev.progress.currentExerciseIdx}_${prev.progress.currentTaskIdx}`;
+                      if (!newProgress.learnedTasks) newProgress.learnedTasks = [];
+                      if (!newProgress.learnedTasks.includes(taskId)) {
+                        newProgress.learnedTasks = [...newProgress.learnedTasks, taskId];
+                      }
+                    }
                     
                     return { ...prev, progress: newProgress };
                   });
@@ -790,14 +901,34 @@ const App: React.FC = () => {
                </div>
             </div>
 
-            <div className="space-y-3">
-              <button onClick={resetLesson} className="w-full py-4 bg-blue-600 text-white rounded-2xl font-bold shadow-lg shadow-blue-200 hover:bg-blue-700 transition-colors">
-                Повторить урок
-              </button>
-              <button onClick={() => setCurrentView('dashboard')} className="w-full py-4 bg-slate-100 text-slate-600 rounded-2xl font-bold hover:bg-slate-200 transition-colors">
-                На главную
-              </button>
-            </div>
+                <div className="flex space-x-3">
+                  <button 
+                    onClick={() => setCurrentView('practice')}
+                    className="flex-1 py-3 bg-blue-600 text-white rounded-xl font-bold shadow-lg shadow-blue-100 hover:bg-blue-700 transition-colors"
+                  >
+                    Продолжить
+                  </button>
+                  <button 
+                    onClick={resetLesson}
+                    className="px-4 py-3 bg-slate-100 text-slate-500 rounded-xl font-bold hover:bg-slate-200 transition-colors"
+                    title="Начать заново"
+                  >
+                    Сначала
+                  </button>
+                  {((progress?.learnedTasks?.length || 0) > 0) && (
+                    <button 
+                      onClick={() => {
+                        if (window.confirm('Очистить список выученных предложений в этом уроке?')) {
+                          updateProgress({ learnedTasks: [] });
+                        }
+                      }}
+                      className="px-4 py-3 bg-red-50 text-red-400 rounded-xl font-bold hover:bg-red-100 transition-colors"
+                      title="Сбросить выученные"
+                    >
+                      <i className="fa-solid fa-trash-can"></i>
+                    </button>
+                  )}
+                </div>
           </div>
         )}
 

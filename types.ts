@@ -46,6 +46,7 @@ export interface LessonProgress {
   statistics: LessonStatistics;
   completed: boolean;
   lastActivityAt: string;
+  learnedTasks?: string[]; // Array of "exerciseIdx_taskIdx"
 }
 
 // ============================================
